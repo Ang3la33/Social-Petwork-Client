@@ -106,3 +106,10 @@
 
     </build>
 </project>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>
+
