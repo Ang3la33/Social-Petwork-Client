@@ -1,4 +1,4 @@
 package com.socialpetwork;
 
-public class ClientMenuTest {
+public class PostClientTest {
 }

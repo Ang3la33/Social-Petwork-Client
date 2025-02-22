@@ -1,4 +1,4 @@
-package com.socialpetwork.http.client;
+package com.socialpetwork.http.cli;
 
 import java.util.Scanner;
 
