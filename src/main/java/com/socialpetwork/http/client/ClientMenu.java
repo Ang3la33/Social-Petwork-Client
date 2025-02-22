@@ -1,4 +1,4 @@
-import sun.net.www.http.HttpClient;
+package com.socialpetwork.http.client;
 
 import java.util.Scanner;
 
