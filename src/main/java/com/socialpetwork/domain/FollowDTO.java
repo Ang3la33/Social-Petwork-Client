@@ -1,4 +1,4 @@
 package com.socialpetwork.domain;
 
-public class Post {
+public class FollowDTO {
 }
