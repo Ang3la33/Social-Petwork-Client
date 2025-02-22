@@ -1,4 +1,4 @@
-package com.socialpetwork.post;
+package com.socialpetwork.domain;
 
 import java.io.IOException;
 import java.io.OutputStream;
