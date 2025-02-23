@@ -1,6 +1,10 @@
 package com.socialpetwork.http.cli;
 
+import com.socialpetwork.http.client.PostClient;
+import com.socialpetwork.http.client.UserClient;
 import sun.net.www.http.HttpClient;
+
+// CHECK on all options
 
 
 import java.util.Scanner;
@@ -8,8 +12,11 @@ import java.util.Scanner;
 
 public class ClientMenu {
     private static final String baseURL = "https://localhost:8008"; //FILLER
-    // Not sure how to do this at the moment
-    // private static final HttpClient client = HttpClient.newHttpClient();
+    // this may not work? trying set up
+    private static final HttpClient client = HttpClient.newHttpClient(client);
+    private static final PostClient postClient = new PostClient(client);
+    private static final UserClient userClient = new UserClient(client);
+
 
 
     public static void main(String[] args){
@@ -36,30 +43,34 @@ public class ClientMenu {
                 case 3 -> postMenu(scanner);
                 case 4 -> commentsMenu(scanner);
                 case 5 -> {
-                    System.out.println("Exiting the program.");
+                    System.out.println("Exiting Social-Petwork.");
                     System.exit(0);
                 }
+                default -> System.out.println("Invalid option. Please select a number from 1 to 5.");
             }
         }
     }
+
     // Profile Menu
     private static void userManagementMenu(Scanner scanner) {
         while (true) {
             System.out.println("\n Profile Management ");
             System.out.println("-------------------------");
             System.out.println("1. Create Profile");
-            System.out.println("2. View All Users ");
-            System.out.println("3. Delete User");
-            System.out.println("4. Go to Home");
+            System.out.println("2. Update User Information ");
+            System.out.println("3. View All Users ");
+            System.out.println("4. Delete User");
+            System.out.println("5. Go to Home");
             System.out.println("Choose an option: ");
             int option = scanner.nextInt();
             scanner.nextLine();
 
             switch (option) {
-                case 1 -> createUser(scanner);
-                case 2 -> viewAllUsers(scanner);
-                case 3 -> deleteUser(scanner);
-                case 4 -> {
+                case 1 -> userClient.createNewUser(scanner);
+                case 2 -> userClient.viewAllUsers(scanner);
+                case 3 -> userClient.deleteUser(scanner);
+                case 4 -> userClient.deleteUser(scanner);
+                case 5 -> {
                     return;
                 }
 
@@ -81,7 +92,7 @@ public class ClientMenu {
             scanner.nextLine();
 
             switch (option) {
-                case 1 -> followUser(scanner);
+              //  case 1 -> followClient.followUser(scanner);
                 case 2 -> unfollowUser(scanner);
                 case 3 -> getFollowers(scanner);
                 case 4 -> {
@@ -108,9 +119,9 @@ public class ClientMenu {
             scanner.nextLine();
 
             switch (option) {
-                case 1 -> createPost(scanner);
-                case 2 -> updatePost(scanner);
-                case 3 -> deletePost(scanner);
+                case 1 -> postClient.createPost(scanner);
+                case 2 -> postClient.updatePost(scanner);
+                case 3 -> postClient.deletePost(scanner);
                 case 4 -> {
                     return;
                 }
