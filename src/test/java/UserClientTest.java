@@ -32,7 +32,7 @@ public class UserClientTest {
 
         assertNotNull(users, "User list should not be null");
         assertEquals(2, users.size(), "Expected two users in the list");
-        assertEquals("Rein Deer", users.getFirst().getName(), "First user should be John Doe");
+        assertEquals("Rein Deer", users.getFirst().getName(), "First user should be Rein Deer");
     }
 
     @Test
