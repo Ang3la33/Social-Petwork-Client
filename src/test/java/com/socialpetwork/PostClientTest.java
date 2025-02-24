@@ -1,6 +1,8 @@
 package com.socialpetwork;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.socialpetwork.domain.PostDTO;
 import com.socialpetwork.http.client.PostClient;
 import com.socialpetwork.util.HttpClient;
@@ -33,7 +35,9 @@ public class PostClientTest {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
+        objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
     @Test

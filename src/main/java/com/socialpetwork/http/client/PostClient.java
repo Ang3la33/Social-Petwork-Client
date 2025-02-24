@@ -1,6 +1,8 @@
 package com.socialpetwork.http.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.socialpetwork.domain.PostDTO;
 import com.socialpetwork.util.HttpClient;
@@ -15,9 +17,12 @@ public class PostClient {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public PostClient() {
-        httpClient = new HttpClient();
-        objectMapper = new ObjectMapper();
+    public PostClient(HttpClient httpClient) {
+        this.httpClient = httpClient;
+        this.objectMapper = new ObjectMapper()
+                    .registerModule(new JavaTimeModule())
+                    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
     }
 
     public List<PostDTO> getAllPosts() {
