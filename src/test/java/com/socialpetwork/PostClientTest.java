@@ -20,7 +20,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -81,5 +81,38 @@ public class PostClientTest {
         assertEquals("New Post",result.getContent());
         assertEquals(now,result.getCreatedAt());
         assertEquals(1L,result.getId());
+    }
+
+    @Test
+    void testUpdatePost() throws IOException {
+        LocalDateTime now = LocalDateTime.now();
+        PostDTO updatedPost = new PostDTO(1L,"Updated Post",1L,now);
+
+        String requestBody = objectMapper.writeValueAsString(updatedPost);
+        String responseBody = objectMapper.writeValueAsString(updatedPost);
+
+        HttpResponse mockResponse = new HttpResponse(200, responseBody);
+
+        when(httpClient.put(eq("http://localhost:8080/posts/1?user_id=1"), anyString())).thenReturn(mockResponse);
+
+        PostDTO result = postClient.updatePost(1L,1L, updatedPost);
+
+        assertNotNull(result);
+        assertEquals("Updated Post",result.getContent());
+        assertEquals(now,result.getCreatedAt());
+    }
+
+    @Test
+    void testDeletePost() throws IOException {
+        Long postId = 1L;
+
+        HttpResponse mockResponse = new HttpResponse(200, "");
+        when(httpClient.delete(eq("http://localhost:8080/posts/"+postId))).thenReturn(mockResponse);
+
+        boolean isSuccessful = postClient.deletePost(postId);
+        assertEquals(true, isSuccessful);
+
+        HttpResponse mockFailure = new HttpResponse(404, "");
+        when(httpClient.delete(eq("http://localhost:8080/posts/"+postId))).thenReturn(mockFailure);
     }
 }
