@@ -6,15 +6,17 @@ public class PostDTO {
 
     private Long id;
     private String content;
-    private Long userId;
+    private UserDTO user;
     private LocalDateTime createdAt;
 
-    public PostDTO() {}
+    public PostDTO() {
+        this.createdAt = LocalDateTime.now();
+    }
 
-    public PostDTO(Long id, String content, Long userId, LocalDateTime createdAt) {
+    public PostDTO(Long id, String content, UserDTO user, LocalDateTime createdAt) {
         this.id = id;
         this.content = content;
-        this.userId = userId;
+        this.user = user;
         this.createdAt = createdAt;
     }
 
@@ -34,12 +36,12 @@ public class PostDTO {
         this.content = content;
     }
 
-    public Long getUserId() {
-        return userId;
+    public UserDTO getUser() {
+        return user;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setUserId(UserDTO user) {
+        this.user = user;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -52,6 +54,6 @@ public class PostDTO {
 
     @Override
     public String toString() {
-        return "PostDTO [id=" + id + ", content=" + content + ", userId=" + userId + ", createdAt= " + createdAt + "]";
+        return "PostDTO [id=" + id + ", content=" + content + ", user=" + user + ", createdAt= " + createdAt + "]";
     }
 }
