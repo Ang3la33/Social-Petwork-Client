@@ -75,11 +75,11 @@ public class PostClient {
         }
     }
 
-    public PostDTO updatePost(Long id, PostDTO postDTO, Long userId) {
+    public PostDTO updatePost(Long id, Long userId, PostDTO postDTO) {
         String url = BASE_URL + "/" + id + "?user_id=" + userId;
         try {
-            String jsonPayload = objectMapper.writeValueAsString(postDTO);
-            HttpResponse response = httpClient.post(url, jsonPayload);
+            String requestBody = objectMapper.writeValueAsString(postDTO);
+            HttpResponse response = httpClient.put(url, requestBody);
             if (response.getStatusCode() == 200) {
                 return objectMapper.readValue(response.getBody(), PostDTO.class);
             } else {
@@ -108,5 +108,4 @@ public class PostClient {
             return false;
         }
     }
-
 }
