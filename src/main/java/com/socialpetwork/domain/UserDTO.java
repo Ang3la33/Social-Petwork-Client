@@ -22,7 +22,7 @@ public class UserDTO {
         this.profileUrl = profileUrl;
     }
 
-    // Getter and Seters
+    // Getters and Setters
 
     public Long getId(){
         return id;
