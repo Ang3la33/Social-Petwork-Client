@@ -1,3 +1,5 @@
+package com.socialpetwork;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +32,7 @@ public class UserClientTest {
 
         List<User> users = userClient.getAllUsers();
 
-        assertNotNull(users, "User list should not be null");
+        assertNotNull(users, "com.socialpetwork.User list should not be null");
         assertEquals(2, users.size(), "Expected two users in the list");
         assertEquals("Rein Deer", users.getFirst().getName(), "First user should be Rein Deer");
     }
@@ -44,8 +46,8 @@ public class UserClientTest {
 
         User createdUser = userClient.createUser(newUser);
         assertNotNull(createdUser, "Created user should not be null");
-        assertEquals(3, createdUser.getId(), "User ID should be 3");
-        assertEquals("Dingle Berry", createdUser.getName(), "User name should be Dingle Berry");
+        assertEquals(3, createdUser.getId(), "com.socialpetwork.User ID should be 3");
+        assertEquals("Dingle Berry", createdUser.getName(), "com.socialpetwork.User name should be Dingle Berry");
     }
 
     @Test
