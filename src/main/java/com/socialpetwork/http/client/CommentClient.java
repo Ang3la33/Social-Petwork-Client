@@ -1,104 +1,61 @@
 package com.socialpetwork.http.client;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.socialpetwork.domain.CommentDTO;
 import com.socialpetwork.domain.PostDTO;
 import com.socialpetwork.domain.UserDTO;
+import com.socialpetwork.util.HttpClient;
+import com.socialpetwork.util.HttpResponse;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
 public class CommentClient {
 
     private static final String BASE_URL = "http://localhost:8080/comments";
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final HttpClient httpClient = new HttpClient();
 
     public CommentDTO createComment(String content, UserDTO user, PostDTO post) throws Exception {
-        URL url = new URL(BASE_URL);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setDoOutput(true);
-
         CommentDTO comment = new CommentDTO(null, content, user, post);
-        String json = mapper.writeValueAsString(comment);
+        String jsonString = objectMapper.writeValueAsString(comment);
+        HttpResponse httpResponse = httpClient.post(BASE_URL, jsonString);
 
-        try (OutputStream os = connection.getOutputStream()) {
-            byte[] input = json.getBytes("UTF-8");
-            os.write(input, 0, input.length);
-        }
-
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_CREATED) {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                return mapper.readValue(br, CommentDTO.class);
-            }
+        if (httpResponse.getStatusCode() == 201) {
+            return objectMapper.readValue(httpResponse.getBody(), CommentDTO.class);
         }
         return null;
     }
 
-    public CommentDTO getCommentById(Long id) throws Exception {
-        URL url = new URL(BASE_URL + "/" + id);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                return mapper.readValue(br, CommentDTO.class);
-            }
+    public CommentDTO getCommentById(String postId) throws Exception {
+        HttpResponse httpResponse = httpClient.get(BASE_URL + "/" + postId);
+        if (httpResponse.getStatusCode() == 200) {
+            return objectMapper.readValue(httpResponse.getBody(), CommentDTO.class);
         }
         return null;
     }
 
-    public List<CommentDTO> getCommentsByPostId(Long postId) throws Exception {
-        URL url = new URL(BASE_URL + "/" + postId);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                return mapper.readValue(br, List.class);
-            }
+    public List<CommentDTO> getCommentsByPostId(String postId) throws Exception {
+        HttpResponse httpResponse = httpClient.get(BASE_URL + "/" + postId);
+        if (httpResponse.getStatusCode() == 200) {
+            return objectMapper.readValue(httpResponse.getBody(), new TypeReference<List<CommentDTO>>() {});
         }
         return Collections.emptyList();
     }
 
     public CommentDTO updateComment(Long id, String newComment) throws Exception {
-        URL url = new URL(BASE_URL + "/" + id);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("PUT");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setDoOutput(true);
+        String jsonString = "{\"id\":" + id + ",\"content\":\"" + newComment + "\"}";
+        HttpResponse httpResponse = httpClient.put(BASE_URL + "/" + id, jsonString);
 
-        String jsonInputString = "{\"content\": \"" + newComment + "\"}";
-        try (OutputStream os = connection.getOutputStream()) {
-            byte[] input = jsonInputString.getBytes("UTF-8");
-            os.write(input, 0, input.length);
-        }
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                return mapper.readValue(br, CommentDTO.class);
-            }
+        if (httpResponse.getStatusCode() == 200) {
+            return objectMapper.readValue(httpResponse.getBody(), CommentDTO.class);
         }
         return null;
     }
 
     public boolean deleteComment(Long id) throws Exception {
-        URL url = new URL(BASE_URL + "/" + id);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("DELETE");
-
-        int responseCode = connection.getResponseCode();
-        return responseCode == HttpURLConnection.HTTP_NO_CONTENT;
-
+        HttpResponse httpResponse = httpClient.delete(BASE_URL + "/" + id);
+        return httpResponse.getStatusCode() == 204;
     }
-
 }
