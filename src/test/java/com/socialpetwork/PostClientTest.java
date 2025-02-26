@@ -43,4 +43,5 @@ public class PostClientTest {
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         userDTO = new UserDTO();
     }
+}
 
