@@ -1,25 +1,25 @@
 package com.socialpetwork.domain;
 
 public class UserDTO {
+    private String password;
     private Long id;
     private String name;
     private String birthday;
     private String email;
     private String username;
-    private String profileUrl;
 
     // Constructor
     public UserDTO(long l, String johnDoe, String mail){
     }
 
     // Parameterized Constructor
-    public UserDTO(Long id, String name, String birthday, String email, String username, String profileUrl) {
+    public UserDTO(Long id, String name, String birthday, String email, String username, String password) {
         this.id = id;
         this.name = name;
         this.birthday = birthday;
         this.email = email;
         this.username = username;
-        this.profileUrl = profileUrl;
+        this.password = password;
     }
 
     // Getters and Setters
@@ -64,16 +64,11 @@ public class UserDTO {
         this.username = username;
     }
 
-
-    public String getProfileUrl() {
-        return profileUrl;
+    public String getPassword(){
+        return password;
     }
-
-    public void setProfileUrl(String profileUrl) {
-        this.profileUrl = profileUrl;
+    public void setPassword(String password){
+        this.password = password;
     }
-
-
-
 
 }

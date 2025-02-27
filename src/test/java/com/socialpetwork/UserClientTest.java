@@ -33,7 +33,7 @@ class UserClientTest {
     // ✅ Test Registration Success
     @Test
     void testRegisterUser_Success() throws Exception {
-        UserDTO newUser = new UserDTO(null, "John Doe", "1990-01-01", "johndoe@example.com", "johndoe", "default.jpg");
+        UserDTO newUser = new UserDTO(null, "John Doe", "1990-01-01", "johndoe@example.com", "johndoe","123");
 
         doReturn(mockConnection).when(userClient).createConnection(anyString(), eq("POST"), anyString());
         when(mockConnection.getResponseCode()).thenReturn(201);
@@ -47,7 +47,7 @@ class UserClientTest {
     // ❌ Test Registration Failure
     @Test
     void testRegisterUser_Failure() throws Exception {
-        UserDTO newUser = new UserDTO(null, "John Doe", "1990-01-01", "johndoe@example.com", "johndoe", "default.jpg");
+        UserDTO newUser = new UserDTO(null, "John Doe", "1990-01-01", "johndoe@example.com", "johndoe","123");
 
         doReturn(mockConnection).when(userClient).createConnection(anyString(), eq("POST"), anyString());
         when(mockConnection.getResponseCode()).thenReturn(400);
@@ -86,7 +86,7 @@ class UserClientTest {
     // ✅ Test Fetching User Details Success
     @Test
     void testGetUserDetails_Success() throws Exception {
-        UserDTO mockUser = new UserDTO(1L, "John Doe", "1990-01-01", "johndoe@example.com", "johndoe", "default.jpg");
+        UserDTO mockUser = new UserDTO(1L, "John Doe", "1990-01-01", "johndoe@example.com", "johndoe","123");
         String jsonResponse = objectMapper.writeValueAsString(mockUser);
 
         doReturn(mockConnection).when(userClient).createConnection(anyString(), eq("GET"), isNull());

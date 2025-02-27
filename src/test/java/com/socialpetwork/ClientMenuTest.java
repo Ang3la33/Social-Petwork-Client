@@ -198,7 +198,7 @@ class ClientMenuTest {
         CommentDTO comment = new CommentDTO(1L, "Nice post!", post.getUser(), post);
 
         try {
-            when(commentClient.getCommentsByPostId(anyString())).thenReturn(List.of(comment));
+            when(commentClient.getCommentsByPostId(Long.valueOf(anyString()))).thenReturn(List.of(comment));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
