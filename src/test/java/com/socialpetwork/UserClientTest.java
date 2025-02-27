@@ -1,140 +1,143 @@
 package com.socialpetwork;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.socialpetwork.domain.UserDTO;
+import com.socialpetwork.http.client.UserClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.ByteArrayInputStream;
+import java.net.HttpURLConnection;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
-public class UserClientTest {
+class UserClientTest {
 
     @Mock
-    private HttpClient httpClient;
+    private HttpURLConnection mockConnection;
 
     private UserClient userClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
-    public void setUp() {
-        userClient = new UserClient(httpClient);
+    void setUp() {
+        userClient = spy(new UserClient());
     }
 
+    // ✅ Test Registration Success
     @Test
-    public void testGetAllUsers() {
-        String jsonResponse = "[{\"id\":1,\"name\":\"Rein Deer\"},{\"id\":2,\"name\":\"No Go Bro\"}]";
-        HttpResponse response = new HttpResponse(200, jsonResponse);
-        when(httpClient.get("/users")).thenReturn(response);
+    void testRegisterUser_Success() throws Exception {
+        UserDTO newUser = new UserDTO(null, "John Doe", "1990-01-01", "johndoe@example.com", "johndoe", "default.jpg");
 
-        List<User> users = userClient.getAllUsers();
+        doReturn(mockConnection).when(userClient).createConnection(anyString(), eq("POST"), anyString());
+        when(mockConnection.getResponseCode()).thenReturn(201);
+        when(mockConnection.getInputStream()).thenReturn(new ByteArrayInputStream("User registered successfully".getBytes()));
 
-        assertNotNull(users, "com.socialpetwork.User list should not be null");
-        assertEquals(2, users.size(), "Expected two users in the list");
-        assertEquals("Rein Deer", users.getFirst().getName(), "First user should be Rein Deer");
+        boolean result = userClient.register(newUser);
+
+        assertTrue(result, "User registration should be successful");
     }
 
+    // ❌ Test Registration Failure
     @Test
-    public void testCreateUser() {
-        User newUser = new User(null, "Dingle Berry");
-        String jsonResponse = "{\"id\":3,\"name\":\"Dingle Berry\"}";
-        HttpResponse response = new HttpResponse(201, jsonResponse);
-        when(httpClient.post("/users", newUser)).thenReturn(response);
+    void testRegisterUser_Failure() throws Exception {
+        UserDTO newUser = new UserDTO(null, "John Doe", "1990-01-01", "johndoe@example.com", "johndoe", "default.jpg");
 
-        User createdUser = userClient.createUser(newUser);
-        assertNotNull(createdUser, "Created user should not be null");
-        assertEquals(3, createdUser.getId(), "com.socialpetwork.User ID should be 3");
-        assertEquals("Dingle Berry", createdUser.getName(), "com.socialpetwork.User name should be Dingle Berry");
+        doReturn(mockConnection).when(userClient).createConnection(anyString(), eq("POST"), anyString());
+        when(mockConnection.getResponseCode()).thenReturn(400);
+        when(mockConnection.getErrorStream()).thenReturn(new ByteArrayInputStream("Registration failed".getBytes()));
+
+        boolean result = userClient.register(newUser);
+
+        assertFalse(result, "User registration should fail");
     }
 
+    // ✅ Test Login Success
     @Test
-    public void testGetAllUsersHandlesError() {
-        HttpResponse response = new HttpResponse(404, "Not Found");
-        when(httpClient.get("/users")).thenReturn(response);
+    void testLoginUser_Success() throws Exception {
+        doReturn(mockConnection).when(userClient).createConnection(anyString(), eq("POST"), anyString());
+        when(mockConnection.getResponseCode()).thenReturn(200);
+        when(mockConnection.getInputStream()).thenReturn(new ByteArrayInputStream("1".getBytes()));
 
-        Exception exception = assertThrows(RuntimeException.class, () -> userClient.getAllUsers());
-        assertTrue(exception.getMessage().contains("404"), "404 Not Found error");
+        Long userId = userClient.login("johndoe");
+
+        assertNotNull(userId, "User ID should not be null on successful login");
+        assertEquals(1L, userId, "User ID should match expected value");
     }
 
+    // ❌ Test Login Failure
     @Test
-    public void testCreateUserHandlesServerError() {
-        User newUser = new User(null, "Billy Bob Joe");
-        HttpResponse response = new HttpResponse(500, "Internal Server Error");
-        when(httpClient.post("/users", newUser)).thenReturn(response);
+    void testLoginUser_Failure() throws Exception {
+        doReturn(mockConnection).when(userClient).createConnection(anyString(), eq("POST"), anyString());
+        when(mockConnection.getResponseCode()).thenReturn(401);
+        when(mockConnection.getErrorStream()).thenReturn(new ByteArrayInputStream("Login failed".getBytes()));
 
-        Exception exception = assertThrows(RuntimeException.class, () -> userClient.createUser(newUser));
-        assertTrue(exception.getMessage().contains("500"), "HTTP 500 Internal Server Error");
-    }
-}
+        Long userId = userClient.login("johndoe");
 
-interface HttpClient {
-    HttpResponse get(String endpoint);
-    HttpResponse post(String endpoint, Object payload);
-}
-
-class HttpResponse {
-    private int statusCode;
-    private String body;
-
-    public HttpResponse(int statusCode, String body) {
-        this.statusCode = statusCode;
-        this.body = body;
-    }
-    public int getStatusCode() {
-        return statusCode;
-    }
-    public String getBody() {
-        return body;
-    }
-}
-
-class User {
-    private Integer id;
-    private String name;
-
-    public User(Integer id, String name) {
-        this.id = id;
-        this.name = name;
-    }
-    public Integer getId() {
-        return id;
-    }
-    public String getName() {
-        return name;
-    }
-}
-
-class UserClient {
-    private HttpClient httpClient;
-
-    public UserClient(HttpClient httpClient) {
-        this.httpClient = httpClient;
+        assertNull(userId, "User ID should be null for incorrect credentials");
     }
 
-    public List<User> getAllUsers() {
-        HttpResponse response = httpClient.get("/users");
-        if (response.getStatusCode() != 200) {
-            throw new RuntimeException("Error: " + response.getStatusCode());
-        }
+    // ✅ Test Fetching User Details Success
+    @Test
+    void testGetUserDetails_Success() throws Exception {
+        UserDTO mockUser = new UserDTO(1L, "John Doe", "1990-01-01", "johndoe@example.com", "johndoe", "default.jpg");
+        String jsonResponse = objectMapper.writeValueAsString(mockUser);
 
-        if (response.getBody().contains("Rein Deer")) {
-            return List.of(new User(1, "Lucy Satan"), new User(2, "Lucy Satan"));
-        }
-        return List.of();
+        doReturn(mockConnection).when(userClient).createConnection(anyString(), eq("GET"), isNull());
+        when(mockConnection.getResponseCode()).thenReturn(200);
+        when(mockConnection.getInputStream()).thenReturn(new ByteArrayInputStream(jsonResponse.getBytes()));
+
+        UserDTO user = userClient.getUserDetails(1L);
+
+        assertNotNull(user, "User should not be null");
+        assertEquals("johndoe", user.getUsername(), "Usernames should match");
     }
 
-    public User createUser(User user) {
-        HttpResponse response = httpClient.post("/users", user);
-        if (response.getStatusCode() != 201) {
-            throw new RuntimeException("Error: " + response.getStatusCode());
-        }
+    // ❌ Test Fetching User Details Failure (User Not Found)
+    @Test
+    void testGetUserDetails_Failure() throws Exception {
+        doReturn(mockConnection).when(userClient).createConnection(anyString(), eq("GET"), isNull());
+        when(mockConnection.getResponseCode()).thenReturn(404);
+        when(mockConnection.getErrorStream()).thenReturn(new ByteArrayInputStream("User not found".getBytes()));
 
-        if (response.getBody().contains("Dingle Berry")) {
-            return new User(3, "Dingle Berry");
-        }
-        return null;
+        UserDTO user = userClient.getUserDetails(999L);
+
+        assertNull(user, "User should be null if not found");
+    }
+
+    // ✅ Test Fetching Users Success
+    @Test
+    void testFetchUsers_Success() throws Exception {
+        String jsonResponse = "[{\"id\":1,\"name\":\"John Doe\",\"username\":\"johndoe\"}," +
+                "{\"id\":2,\"name\":\"Jane Doe\",\"username\":\"janedoe\"}]";
+
+        doReturn(mockConnection).when(userClient).createConnection(anyString(), eq("GET"), isNull());
+        when(mockConnection.getResponseCode()).thenReturn(200);
+        when(mockConnection.getInputStream()).thenReturn(new ByteArrayInputStream(jsonResponse.getBytes()));
+
+        List<UserDTO> users = userClient.fetchUsers();
+
+        assertNotNull(users, "Users list should not be null");
+        assertEquals(2, users.size(), "There should be two users in the list");
+        assertEquals("johndoe", users.get(0).getUsername(), "First user should be 'johndoe'");
+    }
+
+    // ❌ Test Fetching Users Failure
+    @Test
+    void testFetchUsers_Failure() throws Exception {
+        doReturn(mockConnection).when(userClient).createConnection(anyString(), eq("GET"), isNull());
+        when(mockConnection.getResponseCode()).thenReturn(500);
+        when(mockConnection.getErrorStream()).thenReturn(new ByteArrayInputStream("Internal Server Error".getBytes()));
+
+        List<UserDTO> users = userClient.fetchUsers();
+
+        assertNotNull(users, "Users list should not be null even on failure");
+        assertTrue(users.isEmpty(), "Users list should be empty on failure");
     }
 }

@@ -1,33 +1,30 @@
 package com.socialpetwork.http.cli;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.socialpetwork.domain.PostDTO;
+import com.socialpetwork.domain.UserDTO;
+import com.socialpetwork.http.client.FollowClient;
+import com.socialpetwork.http.client.PostClient;
+import com.socialpetwork.http.client.UserClient;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
 public class ClientMenu {
-    private static final String BASE_URL = "http://localhost:8080/api";
-    private static final HttpClient client = HttpClient.newHttpClient();
     private static final Scanner scanner = new Scanner(System.in);
-    private static Long loggedInUserId = null;
-    private static String loggedInUsername = null;
+    private static final UserClient userClient = new UserClient();
+    private static final PostClient postClient = new PostClient();
+    private static final FollowClient followClient = new FollowClient();
+
+    public static Long loggedInUserId = null;
+    public static String loggedInUsername = null;
+    private static UserDTO loggedInUser = null; // Store full user details
 
     public static void main(String[] args) {
-        while (true) {
-            mainMenu();
-        }
+        mainMenu();
     }
 
     // 🏡 Main Menu (Before Login)
-    private static void mainMenu() {
+    public static void mainMenu() {
         while (loggedInUserId == null) {
             System.out.println("\n🐾 Welcome to Social Petwork! 🐾");
             System.out.println("1️⃣ Register");
@@ -43,68 +40,58 @@ public class ClientMenu {
                 default -> System.out.println("❌ Invalid option. Try again.");
             }
         }
-        userDashboard(); // Redirect to dashboard after login
+        userDashboard();
     }
 
-    // 🔐 User Authentication
+    // 🔐 Register a new user
     private static void register() {
         scanner.nextLine();
+        System.out.print("👤 Enter full name: ");
+        String name = scanner.nextLine();
+        System.out.print("📅 Enter birthday (YYYY-MM-DD): ");
+        String birthday = scanner.nextLine();
+        System.out.print("📧 Enter email: ");
+        String email = scanner.nextLine();
         System.out.print("👤 Enter username: ");
         String username = scanner.nextLine();
-        System.out.print("🔒 Enter password: ");
-        String password = scanner.nextLine();
+        System.out.print("🖼️ Enter profile picture URL (or press Enter for default): ");
+        String profileUrl = scanner.nextLine();
 
-        String json = "{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}";
+        if (profileUrl.isEmpty()) {
+            profileUrl = "default.jpg"; // Default profile picture
+        }
 
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/users/register"))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(json))
-                    .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        // Create UserDTO
+        UserDTO newUser = new UserDTO(null, name, birthday, email, username, profileUrl);
 
-            if (response.statusCode() == 201) {
-                System.out.println("✅ Registration successful! Please log in.");
-            } else {
-                System.out.println("❌ Registration failed: " + response.body());
-            }
-        } catch (IOException | InterruptedException e) {
-            System.err.println("❌ Error registering: " + e.getMessage());
+        // Register user
+        boolean success = userClient.register(newUser);
+        if (success) {
+            System.out.println("✅ Registration successful! Please log in.");
+        } else {
+            System.out.println("❌ Registration failed. Try again.");
         }
     }
 
+
+    // 🔐 Login
     private static void login() {
         scanner.nextLine();
         System.out.print("👤 Enter username: ");
         String username = scanner.nextLine();
-        System.out.print("🔒 Enter password: ");
-        String password = scanner.nextLine();
 
-        String json = "{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}";
-
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/users/login"))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(json))
-                    .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                loggedInUserId = Long.parseLong(response.body());
-                loggedInUsername = username; // Store username
-                System.out.println("✅ Login successful! Welcome, " + username + "!");
-            } else {
-                System.out.println("❌ Login failed: " + response.body());
-            }
-        } catch (IOException | InterruptedException e) {
-            System.err.println("❌ Error logging in: " + e.getMessage());
+        loggedInUserId = userClient.login(username);
+        if (loggedInUserId != null) {
+            loggedInUser = userClient.getUserDetails(loggedInUserId);
+            loggedInUsername = loggedInUser.getUsername();
+            System.out.println("✅ Login successful! Welcome, " + loggedInUsername + "!");
+        } else {
+            System.out.println("❌ Login failed. Try again.");
         }
     }
 
     // 🏡 User Dashboard
-    private static void userDashboard() {
+    public static void userDashboard() {
         while (loggedInUserId != null) {
             System.out.println("\n🏡 Welcome, " + loggedInUsername + ", to Your Dashboard 🏡");
             System.out.println("1️⃣ Browse Users");
@@ -125,32 +112,49 @@ public class ClientMenu {
     }
 
     // 👥 Browsing Users
-    private static void browseUsers() {
+    public static void browseUsers() {
         System.out.println("\n👥 " + loggedInUsername + " is Browsing Users");
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/users"))
-                    .GET()
-                    .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("👤 Users: " + response.body());
-        } catch (IOException | InterruptedException e) {
-            System.err.println("❌ Error fetching users: " + e.getMessage());
+        userClient.fetchUsers();
+        System.out.print("\n1️⃣ Follow a User\n2️⃣ Unfollow a User\n3️⃣ Back to Dashboard\nSelect an option: ");
+
+        int choice = getUserChoice();
+        switch (choice) {
+            case 1 -> followUser();
+            case 2 -> unfollowUser();
+            case 3 -> userDashboard();
+            default -> System.out.println("❌ Invalid option. Try again.");
         }
     }
 
-    // 📜 My Profile Menu
+    private static void followUser() {
+        System.out.print("👤 Enter user ID to follow: ");
+        Long userId = scanner.nextLong();
+        System.out.println(followClient.followUser(loggedInUserId, userId));
+    }
+
+    private static void unfollowUser() {
+        System.out.print("👤 Enter user ID to unfollow: ");
+        Long userId = scanner.nextLong();
+        System.out.println(followClient.unfollowUser(loggedInUserId, userId));
+    }
+
+    // 📜 My Profile
     private static void myProfile() {
         System.out.println("\n📜 " + loggedInUsername + "'s Profile");
-        System.out.println("1️⃣ View My Followers");
+        System.out.println("👤 Name: " + loggedInUser.getName());
+        System.out.println("📅 Birthday: " + loggedInUser.getBirthday());
+        System.out.println("📧 Email: " + loggedInUser.getEmail());
+        System.out.println("🖼️ Profile Picture: " + loggedInUser.getProfileUrl());
+
+        System.out.println("\n1️⃣ View My Followers");
         System.out.println("2️⃣ View Users I Follow");
         System.out.println("3️⃣ Back to Dashboard");
         System.out.print("Select an option: ");
 
         int choice = getUserChoice();
         switch (choice) {
-            case 1 -> viewFollowers();
-            case 2 -> viewFollowing();
+            case 1 -> followClient.getFollowers(loggedInUserId);
+            case 2 -> followClient.getFollowing(loggedInUserId);
             case 3 -> userDashboard();
             default -> System.out.println("❌ Invalid option. Try again.");
         }
@@ -173,41 +177,61 @@ public class ClientMenu {
                 case 2 -> viewPosts("my");
                 case 3 -> viewPosts("following");
                 case 4 -> viewPosts("all");
-                case 5 -> { return; } // Exit posts menu
+                case 5 -> { return; }
                 default -> System.out.println("❌ Invalid option. Try again.");
             }
         }
     }
 
     private static void createPost() {
-        scanner.nextLine();
+        scanner.nextLine(); // Consume any leftover newline
         System.out.print("📝 Enter your post content: ");
         String content = scanner.nextLine();
 
-        String json = "{\"content\":\"" + content + "\", \"userId\":" + loggedInUserId + "}";
+        // ✅ Create a UserDTO object with the logged-in user ID
+        UserDTO user = new UserDTO(loggedInUserId, null, null, null, loggedInUsername, null); // Only setting ID & username
 
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/posts"))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(json))
-                    .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        // ✅ Create PostDTO with user object
+        PostDTO post = new PostDTO(null, content, user, null);
 
-            if (response.statusCode() == 201) {
-                System.out.println("✅ Post created successfully!");
-            } else {
-                System.out.println("❌ Failed to create post: " + response.body());
-            }
-        } catch (IOException | InterruptedException e) {
-            System.err.println("❌ Error creating post: " + e.getMessage());
+        // ✅ Send the post to the API
+        PostDTO createdPost = postClient.createPost(post, loggedInUserId);
+
+        if (createdPost != null) {
+            System.out.println("✅ Post created successfully!");
+        } else {
+            System.out.println("❌ Failed to create post.");
         }
     }
 
-    private static void logout() {
+
+    public static void viewPosts(String category) {
+        List<PostDTO> posts = switch (category) {
+            case "my" -> postClient.getAllPosts();
+            case "following" -> postClient.getAllPosts();
+            case "all" -> postClient.getAllPosts();
+            default -> {
+                System.out.println("❌ Invalid category!");
+                yield List.of();
+            }
+        };
+
+        if (posts.isEmpty()) {
+            System.out.println("🚫 No posts available.");
+            return;
+        }
+
+        for (PostDTO post : posts) {
+            System.out.println("\n📄 Post by: " + (post.getUser() != null ? post.getUser().getId() : "Unknown"));
+            System.out.println("📝 " + post.getContent());
+        }
+    }
+
+    public static void logout() {
         System.out.println("🔒 Logging out...");
         loggedInUserId = null;
         loggedInUsername = null;
+        loggedInUser = null;
     }
 
     private static void exitApplication() {
@@ -215,7 +239,7 @@ public class ClientMenu {
         System.exit(0);
     }
 
-    private static int getUserChoice() {
+    public static int getUserChoice() {
         while (!scanner.hasNextInt()) {
             System.out.println("❌ Please enter a valid number.");
             scanner.next();
