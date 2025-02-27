@@ -11,10 +11,12 @@ import com.socialpetwork.util.HttpResponse;
 import java.util.Collections;
 import java.util.List;
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 public class CommentClient {
 
     private static final String BASE_URL = "http://localhost:8080/comments";
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     private final HttpClient httpClient = new HttpClient();
 
     public CommentDTO createComment(String content, UserDTO user, PostDTO post) throws Exception {

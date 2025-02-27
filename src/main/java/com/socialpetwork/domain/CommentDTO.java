@@ -7,18 +7,13 @@ public class CommentDTO {
     private String content;
     private UserDTO user;
     private PostDTO post;
-    private LocalDateTime postedAt;
 
-    public CommentDTO() {
-        this.postedAt = LocalDateTime.now();
-    }
 
     public CommentDTO(Long id, String content, UserDTO user, PostDTO post) {
         this.id = id;
         this.content = content;
         this.user = user;
         this.post = post;
-        this.postedAt = LocalDateTime.now();
     }
 
     public String getContent() {
@@ -53,11 +48,4 @@ public class CommentDTO {
         this.post = post;
     }
 
-    public LocalDateTime getPostedAt() {
-        return postedAt;
-    }
-
-    public void setPostedAt(LocalDateTime postedAt) {
-        this.postedAt = postedAt;
-    }
 }
