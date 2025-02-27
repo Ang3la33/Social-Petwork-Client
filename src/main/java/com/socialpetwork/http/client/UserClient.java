@@ -1,55 +1,129 @@
 package com.socialpetwork.http.client;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.socialpetwork.domain.UserDTO;
+
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 
 public class UserClient {
     private static final String USER_API_URL = "http://localhost:8080/users";
-    public static void fetchUsers() {
-        HttpURLConnection connection = null;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    // 🔐 Register a new user (Saves to MySQL Database)
+    public boolean register(UserDTO user) {
         try {
-            URL url = new URL(USER_API_URL);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.connect();
+            String jsonPayload = objectMapper.writeValueAsString(user);
+            HttpURLConnection connection = createConnection(USER_API_URL + "/register", "POST", jsonPayload);
 
             int responseCode = connection.getResponseCode();
+            String responseMessage = getResponseBody(connection, responseCode);
 
-            if (responseCode == HttpURLConnection.HTTP_OK) { // 200 OK
-                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String inputLine;
-                StringBuilder responseContent = new StringBuilder();
-
-                while ((inputLine = in.readLine()) != null) {
-                    responseContent.append(inputLine).append("\n");
-                }
-                in.close();
-                System.out.println("User List:");
-                System.out.println(responseContent.toString());
-
+            if (responseCode == 201) {
+                System.out.println("✅ Registration successful!");
+                return true;
             } else {
-                System.err.println("Failed to fetch users. HTTP error code: " + responseCode);
-                BufferedReader errorReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
-                String errorLine;
-                StringBuilder errorResponse = new StringBuilder();
-
-                while ((errorLine = errorReader.readLine()) != null) {
-                    errorResponse.append(errorLine).append("\n");
-                }
-                errorReader.close();
-                System.err.println("Error response: " + errorResponse.toString());
+                System.out.println("❌ Registration failed: " + responseMessage);
+                return false;
             }
         } catch (IOException e) {
-
-            System.err.println("Error, can't connect to the server: " + e.getMessage());
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
+            System.out.println("❌ Error registering: " + e.getMessage());
+            return false;
         }
     }
-}
 
+    // 🔑 Login User (Retrieves user ID from MySQL)
+    public Long login(String username) {
+        try {
+            String jsonPayload = "{\"username\":\"" + username + "\"}";
+            HttpURLConnection connection = createConnection(USER_API_URL + "/login", "POST", jsonPayload);
+
+            int responseCode = connection.getResponseCode();
+            String responseMessage = getResponseBody(connection, responseCode);
+
+            if (responseCode == 200) {
+                return Long.parseLong(responseMessage); // Server returns user ID if login is successful
+            } else {
+                System.out.println("❌ Login failed: " + responseMessage);
+                return null;
+            }
+        } catch (IOException e) {
+            System.out.println("❌ Error logging in: " + e.getMessage());
+            return null;
+        }
+    }
+
+    // 🛠 Fetch user details (From MySQL)
+    public UserDTO getUserDetails(Long userId) {
+        try {
+            HttpURLConnection connection = createConnection(USER_API_URL + "/" + userId, "GET", null);
+
+            int responseCode = connection.getResponseCode();
+            String responseMessage = getResponseBody(connection, responseCode);
+
+            if (responseCode == 200) {
+                return objectMapper.readValue(responseMessage, UserDTO.class);
+            } else {
+                System.out.println("❌ Failed to fetch user details: " + responseMessage);
+                return null;
+            }
+        } catch (IOException e) {
+            System.out.println("❌ Error fetching user details: " + e.getMessage());
+            return null;
+        }
+    }
+
+    // 📄 Fetch All Users from Database
+    public List<UserDTO> fetchUsers() {
+        try {
+            HttpURLConnection connection = createConnection(USER_API_URL, "GET", null);
+
+            int responseCode = connection.getResponseCode();
+            String responseMessage = getResponseBody(connection, responseCode);
+
+            if (responseCode == 200) {
+                return objectMapper.readValue(responseMessage, new TypeReference<List<UserDTO>>() {});
+            } else {
+                System.out.println("❌ Failed to fetch users: " + responseMessage);
+                return List.of();
+            }
+        } catch (IOException e) {
+            System.out.println("❌ Error fetching users: " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    // 🔧 Utility: Create HTTP Connection
+    public HttpURLConnection createConnection(String url, String method, String jsonPayload) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestMethod(method);
+        connection.setRequestProperty("Content-Type", "application/json");
+
+        // Only enable output for POST requests
+        if ("POST".equalsIgnoreCase(method) && jsonPayload != null) {
+            connection.setDoOutput(true);
+            try (OutputStream os = connection.getOutputStream()) {
+                os.write(jsonPayload.getBytes("utf-8"));
+            }
+        }
+        return connection;
+    }
+
+    // 🔧 Utility: Read Response Body (Handles Errors Correctly)
+    private String getResponseBody(HttpURLConnection connection, int responseCode) throws IOException {
+        InputStream inputStream = responseCode < 400 ? connection.getInputStream() : connection.getErrorStream();
+        if (inputStream == null) return "No Response";
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        reader.close();
+        return response.toString();
+    }
+}

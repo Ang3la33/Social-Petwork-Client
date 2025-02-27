@@ -1,9 +1,9 @@
 package com.socialpetwork.http.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.socialpetwork.domain.PostDTO;
 import com.socialpetwork.util.HttpClient;
 import com.socialpetwork.util.HttpResponse;
@@ -13,18 +13,27 @@ import java.util.List;
 
 public class PostClient {
 
-    private final String BASE_URL = "http://localhost:8080/posts";
+    private static final String BASE_URL = "http://localhost:8080/posts";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
+    // ✅ Constructor for ClientMenu
+    public PostClient() {
+        this.httpClient = new HttpClient(); // ✅ Ensure it doesn't break ClientMenu
+        this.objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
+
+    // ✅ Constructor for Testing (Mocking)
     public PostClient(HttpClient httpClient) {
         this.httpClient = httpClient;
         this.objectMapper = new ObjectMapper()
-                    .registerModule(new JavaTimeModule())
-                    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
+    // 🔹 Fetch all posts
     public List<PostDTO> getAllPosts() {
         String url = BASE_URL;
         try {
@@ -33,15 +42,16 @@ public class PostClient {
             if (response.getStatusCode() == 200) {
                 return objectMapper.readValue(response.getBody(), new TypeReference<List<PostDTO>>() {});
             } else {
-                System.out.println("Error- Status Code: " + response.getStatusCode());
-                return List.of(); // returns empty list if error
+                System.out.println("❌ Error - Status Code: " + response.getStatusCode());
+                return List.of();
             }
         } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("❌ Error: " + e.getMessage());
             return List.of();
         }
     }
 
+    // 🔹 Fetch a single post by ID
     public PostDTO getPostById(Long id) {
         String url = BASE_URL + "/" + id;
         try {
@@ -49,32 +59,34 @@ public class PostClient {
             if (response.getStatusCode() == 200) {
                 return objectMapper.readValue(response.getBody(), PostDTO.class);
             } else {
-                System.out.println("Post Not Found. Status Code: " + response.getStatusCode());
+                System.out.println("❌ Post Not Found. Status Code: " + response.getStatusCode());
                 return null;
             }
         } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("❌ Error: " + e.getMessage());
             return null;
         }
     }
 
+    // 🔹 Create a new post
     public PostDTO createPost(PostDTO postDTO, Long userId) {
         String url = BASE_URL + "?user_id=" + userId;
         try {
             String jsonPayload = objectMapper.writeValueAsString(postDTO);
             HttpResponse response = httpClient.post(url, jsonPayload);
-            if (response.getStatusCode() == 200) {
+            if (response.getStatusCode() == 201) {
                 return objectMapper.readValue(response.getBody(), PostDTO.class);
             } else {
-                System.out.println("Error - Status Code: " + response.getStatusCode());
+                System.out.println("❌ Error - Status Code: " + response.getStatusCode());
                 return null;
             }
         } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("❌ Error: " + e.getMessage());
             return null;
         }
     }
 
+    // 🔹 Update a post
     public PostDTO updatePost(Long id, Long userId, PostDTO postDTO) {
         String url = BASE_URL + "/" + id + "?user_id=" + userId;
         try {
@@ -83,28 +95,29 @@ public class PostClient {
             if (response.getStatusCode() == 200) {
                 return objectMapper.readValue(response.getBody(), PostDTO.class);
             } else {
-                System.out.println("Error - Status Code: " + response.getStatusCode());
+                System.out.println("❌ Error - Status Code: " + response.getStatusCode());
                 return null;
             }
         } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("❌ Error: " + e.getMessage());
             return null;
         }
     }
 
+    // 🔹 Delete a post
     public boolean deletePost(Long id) {
         String url = BASE_URL + "/" + id;
-        try{
+        try {
             HttpResponse response = httpClient.delete(url);
             if (response.getStatusCode() == 200) {
-                System.out.println("Post Deleted Successfully");
+                System.out.println("✅ Post Deleted Successfully");
                 return true;
             } else {
-                System.out.println("Error - Status Code: " + response.getStatusCode());
+                System.out.println("❌ Error - Status Code: " + response.getStatusCode());
                 return false;
             }
         } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("❌ Error: " + e.getMessage());
             return false;
         }
     }
