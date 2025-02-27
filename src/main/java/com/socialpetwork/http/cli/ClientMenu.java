@@ -87,8 +87,10 @@ public class ClientMenu {
         scanner.nextLine();
         System.out.print("👤 Enter username: ");
         String username = scanner.nextLine();
+        System.out.print("🔑 Enter password: ");
+        String password = scanner.nextLine();
 
-        loggedInUserId = userClient.login(username);
+        loggedInUserId = userClient.login(username,password);
         if (loggedInUserId != null) {
             loggedInUser = userClient.getUserDetails(loggedInUserId);
             loggedInUsername = loggedInUser.getUsername();

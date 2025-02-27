@@ -22,6 +22,8 @@ public class UserDTO {
         this.password = password;
     }
 
+    public UserDTO() {}
+
     // Getters and Setters
 
     public Long getId(){

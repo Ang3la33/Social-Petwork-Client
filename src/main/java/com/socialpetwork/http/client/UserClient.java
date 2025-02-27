@@ -35,11 +35,13 @@ public class UserClient {
         }
     }
 
-    // 🔑 Login User (Retrieves user ID from MySQL)
-    public Long login(String username) {
+    // Login User (Retrieves user ID from MySQL)
+    public Long login(String username, String password) {
         try {
-            String jsonPayload = "{\"username\":\"" + username + "\"}";
-            HttpURLConnection connection = createConnection(USER_API_URL + "/login", "POST", jsonPayload);
+            String url = USER_API_URL + "/login";
+            String jsonPayload = "{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}";
+
+            HttpURLConnection connection = createConnection(url, "POST", jsonPayload);
 
             int responseCode = connection.getResponseCode();
             String responseMessage = getResponseBody(connection, responseCode);
@@ -56,7 +58,10 @@ public class UserClient {
         }
     }
 
-    // 🛠 Fetch user details (From MySQL)
+
+
+
+    // Fetch user details (From MySQL)
     public UserDTO getUserDetails(Long userId) {
         try {
             HttpURLConnection connection = createConnection(USER_API_URL + "/" + userId, "GET", null);

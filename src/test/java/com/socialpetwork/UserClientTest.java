@@ -65,7 +65,7 @@ class UserClientTest {
         when(mockConnection.getResponseCode()).thenReturn(200);
         when(mockConnection.getInputStream()).thenReturn(new ByteArrayInputStream("1".getBytes()));
 
-        Long userId = userClient.login("johndoe");
+        Long userId = userClient.login("johndoe","123");
 
         assertNotNull(userId, "User ID should not be null on successful login");
         assertEquals(1L, userId, "User ID should match expected value");
@@ -78,7 +78,7 @@ class UserClientTest {
         when(mockConnection.getResponseCode()).thenReturn(401);
         when(mockConnection.getErrorStream()).thenReturn(new ByteArrayInputStream("Login failed".getBytes()));
 
-        Long userId = userClient.login("johndoe");
+        Long userId = userClient.login("johndoe", "123");
 
         assertNull(userId, "User ID should be null for incorrect credentials");
     }
