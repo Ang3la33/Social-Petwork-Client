@@ -9,7 +9,7 @@ public class UserDTO {
     private String profileUrl;
 
     // Constructor
-    public UserDTO(){
+    public UserDTO(long l, String johnDoe, String mail){
     }
 
     // Parameterized Constructor

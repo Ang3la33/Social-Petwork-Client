@@ -229,7 +229,7 @@ public class ClientMenu {
 
     public static void viewComments(PostDTO post) {
         try {
-            List<CommentDTO> comments = commentClient.getCommentsByPostId(post.getId().toString());
+            List<CommentDTO> comments = commentClient.getCommentsByPostId(Long.valueOf(post.getId().toString()));
             if (comments.isEmpty()) {
                 System.out.println("🚫 No comments on this post.");
             } else {

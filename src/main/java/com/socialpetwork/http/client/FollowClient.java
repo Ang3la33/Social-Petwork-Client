@@ -15,7 +15,7 @@ import java.util.List;
 
 public class FollowClient {
 
-    private static final String BASE_URL = "http://localhost:8080/follow"; // Base URL for follow-related operations
+    private static final String BASE_URL = "http://localhost:8080/follows"; // Base URL for follow-related operations
     private static final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule()); // ✅ Fix for LocalDateTime serialization
 
