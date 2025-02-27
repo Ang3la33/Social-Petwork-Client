@@ -3,16 +3,19 @@ package com.socialpetwork;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.socialpetwork.http.cli.ClientMenu;
-import com.socialpetwork.http.client.UserClient;
-import com.socialpetwork.http.client.PostClient;
-import com.socialpetwork.http.client.FollowClient;
+import com.socialpetwork.domain.CommentDTO;
 import com.socialpetwork.domain.PostDTO;
 import com.socialpetwork.domain.UserDTO;
+import com.socialpetwork.http.cli.ClientMenu;
+import com.socialpetwork.http.client.CommentClient;
+import com.socialpetwork.http.client.FollowClient;
+import com.socialpetwork.http.client.PostClient;
+import com.socialpetwork.http.client.UserClient;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,14 +36,19 @@ class ClientMenuTest {
     @Mock
     private FollowClient followClient;
 
+    @Mock
+    private CommentClient commentClient;
+
     @BeforeEach
     void setUp() {
+        MockitoAnnotations.openMocks(this);
         outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
 
         userClient = mock(UserClient.class);
         postClient = mock(PostClient.class);
         followClient = mock(FollowClient.class);
+        commentClient = mock(CommentClient.class);
 
         clientMenu = new ClientMenu();
     }
@@ -79,6 +87,32 @@ class ClientMenuTest {
     }
 
     @Test
+    void testRegisterUser() {
+        String input = "John Doe\n1990-01-01\njohn@example.com\njohndoe\n\n";
+        System.setIn(new ByteArrayInputStream(input.getBytes()));
+
+        when(userClient.register(any(UserDTO.class))).thenReturn(true);
+
+        clientMenu.register();
+        String output = outContent.toString();
+
+        assertTrue(output.contains("✅ Registration successful! Please log in."));
+    }
+
+    @Test
+    void testRegisterUserFailure() {
+        String input = "John Doe\n1990-01-01\njohn@example.com\njohndoe\n\n";
+        System.setIn(new ByteArrayInputStream(input.getBytes()));
+
+        when(userClient.register(any(UserDTO.class))).thenReturn(false);
+
+        clientMenu.register();
+        String output = outContent.toString();
+
+        assertTrue(output.contains("❌ Registration failed. Try again."));
+    }
+
+    @Test
     void testValidInput() {
         String input = "1\n";
         System.setIn(new ByteArrayInputStream(input.getBytes()));
@@ -99,7 +133,9 @@ class ClientMenuTest {
 
     @Test
     void testFetchUsers() {
-        when(userClient.fetchUsers()).thenReturn(List.of(new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "profile.jpg")));
+        when(userClient.fetchUsers()).thenReturn(List.of(
+                new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "profile.jpg")
+        ));
 
         clientMenu.browseUsers();
         String output = outContent.toString();
@@ -110,13 +146,68 @@ class ClientMenuTest {
 
     @Test
     void testViewPosts() {
-        when(postClient.getAllPosts()).thenReturn(List.of(new PostDTO(1L, "Hello world!", new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "profile.jpg"), null)));
+        when(postClient.getAllPosts()).thenReturn(List.of(
+                new PostDTO(1L, "Hello world!", new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "profile.jpg"), null)
+        ));
 
-        clientMenu.viewPosts("all");
+        clientMenu.viewPosts(postClient.getAllPosts());
         String output = outContent.toString();
 
         assertTrue(output.contains("📄 Post by: John Doe"));
         assertTrue(output.contains("📝 Hello world!"));
+    }
+
+    @Test
+    void testCreatePost() {
+        String input = "Hello Petwork!\n";
+        System.setIn(new ByteArrayInputStream(input.getBytes()));
+
+        when(postClient.createPost(any(PostDTO.class), anyLong())).thenReturn(
+                new PostDTO(1L, "Hello Petwork!", new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "profile.jpg"), null)
+        );
+
+        clientMenu.createPost();
+        String output = outContent.toString();
+
+        assertTrue(output.contains("✅ Post created successfully!"));
+    }
+
+    @Test
+    void testAddComment() {
+        String input = "Nice post!\n";
+        System.setIn(new ByteArrayInputStream(input.getBytes()));
+
+        PostDTO post = new PostDTO(1L, "Test Post", new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "profile.jpg"), null);
+        CommentDTO comment = new CommentDTO(1L, "Nice post!", post.getUser(), post);
+
+        try {
+            when(commentClient.createComment(anyString(), any(UserDTO.class), any(PostDTO.class))).thenReturn(comment);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        clientMenu.addComment(post);
+        String output = outContent.toString();
+
+        assertTrue(output.contains("✅ Comment added!"));
+    }
+
+    @Test
+    void testViewComments() {
+        PostDTO post = new PostDTO(1L, "Test Post", new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "profile.jpg"), null);
+        CommentDTO comment = new CommentDTO(1L, "Nice post!", post.getUser(), post);
+
+        try {
+            when(commentClient.getCommentsByPostId(anyString())).thenReturn(List.of(comment));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        clientMenu.viewComments(post);
+        String output = outContent.toString();
+
+        assertTrue(output.contains("💬 Comments:"));
+        assertTrue(output.contains("Nice post!"));
     }
 
     @Test

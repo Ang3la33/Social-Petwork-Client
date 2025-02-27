@@ -1,7 +1,9 @@
 package com.socialpetwork.http.cli;
 
+import com.socialpetwork.domain.CommentDTO;
 import com.socialpetwork.domain.PostDTO;
 import com.socialpetwork.domain.UserDTO;
+import com.socialpetwork.http.client.CommentClient;
 import com.socialpetwork.http.client.FollowClient;
 import com.socialpetwork.http.client.PostClient;
 import com.socialpetwork.http.client.UserClient;
@@ -14,6 +16,7 @@ public class ClientMenu {
     private static final UserClient userClient = new UserClient();
     private static final PostClient postClient = new PostClient();
     private static final FollowClient followClient = new FollowClient();
+    private static final CommentClient commentClient = new CommentClient();
 
     public static Long loggedInUserId = null;
     public static String loggedInUsername = null;
@@ -44,7 +47,7 @@ public class ClientMenu {
     }
 
     // 🔐 Register a new user
-    private static void register() {
+    public static void register() {
         scanner.nextLine();
         System.out.print("👤 Enter full name: ");
         String name = scanner.nextLine();
@@ -174,56 +177,82 @@ public class ClientMenu {
             int choice = getUserChoice();
             switch (choice) {
                 case 1 -> createPost();
-                case 2 -> viewPosts("my");
-                case 3 -> viewPosts("following");
-                case 4 -> viewPosts("all");
+                case 2 -> viewPosts(postClient.getAllPosts());
+                case 3 -> viewPosts(postClient.getUserPosts(loggedInUserId));
+                case 4 -> { return; }
+                default -> System.out.println("❌ Invalid option. Try again.");
+            }
+        }
+    }
+
+    public static void createPost() {
+        scanner.nextLine();
+        System.out.print("📝 Enter your post content: ");
+        String content = scanner.nextLine();
+        PostDTO post = new PostDTO(null, content, loggedInUser, null);
+        PostDTO createdPost = postClient.createPost(post, loggedInUserId);
+
+        if (createdPost != null) System.out.println("✅ Post created successfully!");
+        else System.out.println("❌ Failed to create post.");
+    }
+
+    public static void viewPosts(List<PostDTO> posts) {
+        if (posts.isEmpty()) {
+            System.out.println("🚫 No posts available.");
+            return;
+        }
+
+        int index = 0;
+        while (index >= 0 && index < posts.size()) {
+            PostDTO post = posts.get(index);
+            System.out.println("\n📄 Post by: " + (post.getUser() != null ? post.getUser().getUsername() : "Unknown"));
+            System.out.println("📝 " + post.getContent());
+
+            System.out.println("\n1️⃣ See Comments");
+            System.out.println("2️⃣ Add a Comment");
+            System.out.println("3️⃣ Next Post");
+            System.out.println("4️⃣ Previous Post");
+            System.out.println("5️⃣ Back to Post Menu");
+            System.out.print("Select an option: ");
+
+            int choice = getUserChoice();
+            switch (choice) {
+                case 1 -> viewComments(post);
+                case 2 -> addComment(post);
+                case 3 -> index = (index < posts.size() - 1) ? index + 1 : index;
+                case 4 -> index = (index > 0) ? index - 1 : index;
                 case 5 -> { return; }
                 default -> System.out.println("❌ Invalid option. Try again.");
             }
         }
     }
 
-    private static void createPost() {
-        scanner.nextLine(); // Consume any leftover newline
-        System.out.print("📝 Enter your post content: ");
-        String content = scanner.nextLine();
-
-        // ✅ Create a UserDTO object with the logged-in user ID
-        UserDTO user = new UserDTO(loggedInUserId, null, null, null, loggedInUsername, null); // Only setting ID & username
-
-        // ✅ Create PostDTO with user object
-        PostDTO post = new PostDTO(null, content, user, null);
-
-        // ✅ Send the post to the API
-        PostDTO createdPost = postClient.createPost(post, loggedInUserId);
-
-        if (createdPost != null) {
-            System.out.println("✅ Post created successfully!");
-        } else {
-            System.out.println("❌ Failed to create post.");
+    public static void viewComments(PostDTO post) {
+        try {
+            List<CommentDTO> comments = commentClient.getCommentsByPostId(post.getId().toString());
+            if (comments.isEmpty()) {
+                System.out.println("🚫 No comments on this post.");
+            } else {
+                System.out.println("\n💬 Comments:");
+                for (CommentDTO comment : comments) {
+                    System.out.println("- " + comment.getUser().getUsername() + ": " + comment.getContent());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("❌ Error retrieving comments: " + e.getMessage());
         }
     }
 
-
-    public static void viewPosts(String category) {
-        List<PostDTO> posts = switch (category) {
-            case "my" -> postClient.getAllPosts();
-            case "following" -> postClient.getAllPosts();
-            case "all" -> postClient.getAllPosts();
-            default -> {
-                System.out.println("❌ Invalid category!");
-                yield List.of();
-            }
-        };
-
-        if (posts.isEmpty()) {
-            System.out.println("🚫 No posts available.");
-            return;
-        }
-
-        for (PostDTO post : posts) {
-            System.out.println("\n📄 Post by: " + (post.getUser() != null ? post.getUser().getId() : "Unknown"));
-            System.out.println("📝 " + post.getContent());
+    public static void addComment(PostDTO post) {
+        scanner.nextLine();
+        System.out.print("💬 Enter your comment: ");
+        String content = scanner.nextLine();
+        try {
+            CommentDTO newComment = commentClient.createComment(content, loggedInUser, post);
+            if (newComment != null) System.out.println("✅ Comment added!");
+            else System.out.println("❌ Failed to add comment.");
+        } catch (Exception e) {
+            System.out.println("❌ Error adding comment: " + e.getMessage());
         }
     }
 

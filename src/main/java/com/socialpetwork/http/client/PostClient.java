@@ -51,6 +51,24 @@ public class PostClient {
         }
     }
 
+    // 🔹 Fetch only posts created by the logged-in user
+    public List<PostDTO> getUserPosts(Long userId) {
+        String url = BASE_URL + "/user/" + userId; // Endpoint: /posts/user/{userId}
+        try {
+            HttpResponse response = httpClient.get(url);
+
+            if (response.getStatusCode() == 200) {
+                return objectMapper.readValue(response.getBody(), new TypeReference<List<PostDTO>>() {});
+            } else {
+                System.out.println("❌ Error fetching user posts - Status Code: " + response.getStatusCode());
+                return List.of();
+            }
+        } catch (IOException e) {
+            System.out.println("❌ Error fetching user posts: " + e.getMessage());
+            return List.of();
+        }
+    }
+
     // 🔹 Fetch a single post by ID
     public PostDTO getPostById(Long id) {
         String url = BASE_URL + "/" + id;
