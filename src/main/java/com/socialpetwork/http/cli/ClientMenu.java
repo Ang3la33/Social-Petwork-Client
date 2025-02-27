@@ -11,6 +11,7 @@ import com.socialpetwork.http.client.UserClient;
 import java.util.List;
 import java.util.Scanner;
 
+
 public class ClientMenu {
     private static final Scanner scanner = new Scanner(System.in);
     private static final UserClient userClient = new UserClient();
@@ -20,16 +21,17 @@ public class ClientMenu {
 
     public static Long loggedInUserId = null;
     public static String loggedInUsername = null;
-    private static UserDTO loggedInUser = null; // Store full user details
+    private static UserDTO loggedInUser = null;
 
-    public static void main(String[] args) {
+    public static void start() {
+        System.out.println("🐾 Welcome to Social Petwork! 🐾");
         mainMenu();
     }
 
-    // 🏡 Main Menu (Before Login)
+    // Main Menu (Before Login)
     public static void mainMenu() {
         while (loggedInUserId == null) {
-            System.out.println("\n🐾 Welcome to Social Petwork! 🐾");
+            System.out.println("\n🐾 Welcome to The Social Petwork! 🐾");
             System.out.println("1️⃣ Register");
             System.out.println("2️⃣ Login");
             System.out.println("3️⃣ Exit");
@@ -46,7 +48,13 @@ public class ClientMenu {
         userDashboard();
     }
 
-    // 🔐 Register a new user
+    // Exit Application
+    private static void exitApplication() {
+        System.out.println("🐾 Goodbye! See you soon!");
+        System.exit(0);
+    }
+
+    // Register a new user
     public static void register() {
         scanner.nextLine();
         System.out.print("👤 Enter full name: ");
@@ -57,15 +65,12 @@ public class ClientMenu {
         String email = scanner.nextLine();
         System.out.print("👤 Enter username: ");
         String username = scanner.nextLine();
-        System.out.print("🖼️ Enter profile picture URL (or press Enter for default): ");
-        String profileUrl = scanner.nextLine();
+        System.out.print("🔑 Enter password: ");
+        String password = scanner.nextLine();
 
-        if (profileUrl.isEmpty()) {
-            profileUrl = "default.jpg"; // Default profile picture
-        }
 
         // Create UserDTO
-        UserDTO newUser = new UserDTO(null, name, birthday, email, username, profileUrl);
+        UserDTO newUser = new UserDTO(null, name, birthday, email, username, password);
 
         // Register user
         boolean success = userClient.register(newUser);
@@ -114,7 +119,7 @@ public class ClientMenu {
         }
     }
 
-    // 👥 Browsing Users
+    // Browsing Users
     public static void browseUsers() {
         System.out.println("\n👥 " + loggedInUsername + " is Browsing Users");
         userClient.fetchUsers();
@@ -141,13 +146,12 @@ public class ClientMenu {
         System.out.println(followClient.unfollowUser(loggedInUserId, userId));
     }
 
-    // 📜 My Profile
+    // My Profile
     private static void myProfile() {
         System.out.println("\n📜 " + loggedInUsername + "'s Profile");
         System.out.println("👤 Name: " + loggedInUser.getName());
         System.out.println("📅 Birthday: " + loggedInUser.getBirthday());
         System.out.println("📧 Email: " + loggedInUser.getEmail());
-        System.out.println("🖼️ Profile Picture: " + loggedInUser.getProfileUrl());
 
         System.out.println("\n1️⃣ View My Followers");
         System.out.println("2️⃣ View Users I Follow");
@@ -163,7 +167,7 @@ public class ClientMenu {
         }
     }
 
-    // 📝 Posts Menu
+    // Posts Menu
     private static void postsMenu() {
         while (true) {
             System.out.println("\n📝 Posts Menu");
@@ -263,11 +267,6 @@ public class ClientMenu {
         loggedInUser = null;
     }
 
-    private static void exitApplication() {
-        System.out.println("🐾 Goodbye! See you soon!");
-        System.exit(0);
-    }
-
     public static int getUserChoice() {
         while (!scanner.hasNextInt()) {
             System.out.println("❌ Please enter a valid number.");
@@ -275,4 +274,5 @@ public class ClientMenu {
         }
         return scanner.nextInt();
     }
+
 }
