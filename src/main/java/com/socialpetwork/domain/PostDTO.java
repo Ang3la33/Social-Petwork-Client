@@ -50,8 +50,13 @@ public class PostDTO {
         return content;
     }
 
+
+    public void setUser(UserDTO user) {
+        this.user = user;
+
     public void setContent(String content) {
         this.content = content;
+
     }
 
     public LocalDateTime getCreatedAt() {

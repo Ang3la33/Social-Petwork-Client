@@ -19,7 +19,7 @@ public class PostClient {
 
     // ✅ Constructor for ClientMenu
     public PostClient() {
-        this.httpClient = new HttpClient(); // ✅ Ensure it doesn't break ClientMenu
+        this.httpClient = new HttpClient();
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -86,16 +86,18 @@ public class PostClient {
         }
     }
 
-    // 🔹 Create a new post
     public PostDTO createPost(PostDTO postDTO, Long userId) {
-        String url = BASE_URL + "?user_id=" + userId;
+        String url = BASE_URL + "?userId=" + userId;
         try {
             String jsonPayload = objectMapper.writeValueAsString(postDTO);
+            System.out.println("📦 JSON Payload: " + jsonPayload);
             HttpResponse response = httpClient.post(url, jsonPayload);
+
             if (response.getStatusCode() == 201) {
                 return objectMapper.readValue(response.getBody(), PostDTO.class);
             } else {
                 System.out.println("❌ Error - Status Code: " + response.getStatusCode());
+                System.out.println("❌ Error Response: " + response.getBody());
                 return null;
             }
         } catch (IOException e) {
@@ -103,6 +105,7 @@ public class PostClient {
             return null;
         }
     }
+
 
     // 🔹 Update a post
     public PostDTO updatePost(Long id, Long userId, PostDTO postDTO) {
