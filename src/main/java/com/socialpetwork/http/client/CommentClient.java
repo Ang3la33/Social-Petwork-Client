@@ -23,9 +23,10 @@ public class CommentClient {
         String jsonString = objectMapper.writeValueAsString(comment);
         HttpResponse httpResponse = httpClient.post(BASE_URL, jsonString);
 
-        if (httpResponse.getStatusCode() == 200) {
+        if (httpResponse.getStatusCode() == 201) { // Updated to 201 Created
             return objectMapper.readValue(httpResponse.getBody(), CommentDTO.class);
         }
+        System.err.println("Error creating comment: " + httpResponse.getStatusCode() + " - " + httpResponse.getBody());
         return null;
     }
 
@@ -34,6 +35,7 @@ public class CommentClient {
         if (httpResponse.getStatusCode() == 200) {
             return objectMapper.readValue(httpResponse.getBody(), CommentDTO.class);
         }
+        System.err.println("Error fetching comment: " + httpResponse.getStatusCode() + " - " + httpResponse.getBody());
         return null;
     }
 
@@ -42,26 +44,32 @@ public class CommentClient {
         if (httpResponse.getStatusCode() == 200) {
             return objectMapper.readValue(httpResponse.getBody(), new TypeReference<List<CommentDTO>>() {});
         }
+        System.err.println("Error fetching comments for post: " + httpResponse.getStatusCode() + " - " + httpResponse.getBody());
         return Collections.emptyList();
     }
 
     public CommentDTO updateComment(Long id, String newContent) throws Exception {
-        CommentDTO comment = new CommentDTO();
-        comment.setId(id);
-        comment.setContent(newContent);
-        String jsonString = objectMapper.writeValueAsString(comment);
+        CommentDTO comment = getCommentById(id);
+        if (comment != null) {
+            comment.setContent(newContent);
+            String jsonString = objectMapper.writeValueAsString(comment);
+            HttpResponse httpResponse = httpClient.put(BASE_URL + "/" + id, jsonString);
 
-        HttpResponse httpResponse = httpClient.put(BASE_URL + "/" + id, jsonString);
-
-        if (httpResponse.getStatusCode() == 200) {
-            return objectMapper.readValue(httpResponse.getBody(), CommentDTO.class);
+            if (httpResponse.getStatusCode() == 200) {
+                return objectMapper.readValue(httpResponse.getBody(), CommentDTO.class);
+            }
+            System.err.println("Error updating comment: " + httpResponse.getStatusCode() + " - " + httpResponse.getBody());
         }
         return null;
     }
 
     public boolean deleteComment(Long id) throws Exception {
         HttpResponse httpResponse = httpClient.delete(BASE_URL + "/" + id);
+        if (httpResponse.getStatusCode() != 204) {
+            System.err.println("Error deleting comment: " + httpResponse.getStatusCode() + " - " + httpResponse.getBody());
+        }
         return httpResponse.getStatusCode() == 204;
     }
 }
+
 

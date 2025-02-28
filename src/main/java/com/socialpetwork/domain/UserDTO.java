@@ -24,6 +24,11 @@ public class UserDTO {
 
     public UserDTO() {}
 
+    public UserDTO(long l, String user) {
+        this.id = l;
+        this.name = user;
+    }
+
     // Getters and Setters
 
     public Long getId(){
