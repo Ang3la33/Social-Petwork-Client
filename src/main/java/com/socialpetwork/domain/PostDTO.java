@@ -15,19 +15,17 @@ public class PostDTO {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Constructor for getAllPosts (with userId)
+    // Constructor for getAllPosts and createPost
     public PostDTO(Long id, Long userId, String content, LocalDateTime createdAt) {
         this.id = id;
         this.userId = userId;
         this.content = content;
-        this.createdAt = createdAt;
+        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
     }
 
-    // Constructor for createPost (without userId)
-    public PostDTO(Long id, String content) {
-        this.id = id;
-        this.content = content;
-        this.createdAt = LocalDateTime.now();
+    // Simplified constructor for creating a new post without an ID
+    public PostDTO(Long userId, String content) {
+        this(null, userId, content, null);
     }
 
     public Long getId() {
@@ -50,13 +48,8 @@ public class PostDTO {
         return content;
     }
 
-
-    public void setUser(UserDTO user) {
-        this.user = user;
-
     public void setContent(String content) {
         this.content = content;
-
     }
 
     public LocalDateTime getCreatedAt() {
@@ -88,4 +81,5 @@ public class PostDTO {
         return Objects.hash(id, userId, content, createdAt);
     }
 }
+
 
