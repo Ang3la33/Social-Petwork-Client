@@ -41,27 +41,23 @@ public class CommentClientTest {
 
     @Test
     public void testCreateComment_Success() throws Exception {
-        UserDTO user = new UserDTO(1L, "JohnDoe", "john@example.com");
-        PostDTO post = new PostDTO(1L, "Test Post", user, LocalDateTime.now());
+        UserDTO user = new UserDTO(1L, "JohnDoe", "1990-01-01", "john@example.com", "johndoe", "password");
+        PostDTO post = new PostDTO(1L, 1L, "Test Post", LocalDateTime.now());
         CommentDTO comment = new CommentDTO(1L, "Test Comment", user, post);
 
         String commentJson = objectMapper.writeValueAsString(comment);
-        HttpResponse mockResponse = new HttpResponse(200, commentJson);
+        HttpResponse mockResponse = new HttpResponse(201, commentJson); // Use 201 for creation success
 
         when(mockHttpClient.post(eq("http://localhost:8080/comments"), eq(commentJson)))
                 .thenReturn(mockResponse);
 
         CommentDTO result = commentClient.createComment("Test Comment", user, post);
 
-        System.out.println("HTTP Response Body: " + mockResponse.getBody());
-        System.out.println("Result: " + result);
-
         assertNotNull(result, "The result should not be null.");
         assertEquals("Test Comment", result.getContent(), "The content should match the expected value.");
         assertEquals(user.getId(), result.getUser().getId(), "User ID should match.");
         assertEquals(post.getId(), result.getPost().getId(), "Post ID should match.");
     }
-
 
     @Test
     public void testGetCommentById_Success() throws Exception {
@@ -73,8 +69,8 @@ public class CommentClientTest {
 
         CommentDTO result = commentClient.getCommentById(1L);
 
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
+        assertNotNull(result, "The result should not be null.");
+        assertEquals(1L, result.getId(), "Comment ID should match.");
     }
 
     @Test
@@ -88,9 +84,9 @@ public class CommentClientTest {
 
         List<CommentDTO> result = commentClient.getCommentsByPostId(1L);
 
-        assertNotNull(result);
-        assertFalse(result.isEmpty());
-        assertEquals("Test Comment", result.get(0).getContent());
+        assertNotNull(result, "The result list should not be null.");
+        assertFalse(result.isEmpty(), "The result list should not be empty.");
+        assertEquals("Test Comment", result.get(0).getContent(), "Comment content should match.");
     }
 
     @Test
@@ -103,8 +99,8 @@ public class CommentClientTest {
 
         CommentDTO result = commentClient.updateComment(1L, "Updated Comment");
 
-        assertNotNull(result);
-        assertEquals("Updated Comment", result.getContent());
+        assertNotNull(result, "The result should not be null.");
+        assertEquals("Updated Comment", result.getContent(), "The content should be updated.");
     }
 
     @Test
@@ -115,9 +111,10 @@ public class CommentClientTest {
 
         boolean result = commentClient.deleteComment(1L);
 
-        assertTrue(result);
+        assertTrue(result, "The delete operation should return true.");
     }
 }
+
 
 
 
