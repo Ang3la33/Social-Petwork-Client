@@ -183,9 +183,10 @@ public class ClientMenu {
             int choice = getUserChoice();
             switch (choice) {
                 case 1 -> createPost();
-                case 2 -> viewPosts(postClient.getAllPosts());
-                case 3 -> viewPosts(postClient.getUserPosts(loggedInUserId));
-                case 4 -> { return; }
+                case 2 -> viewPosts(postClient.getUserPosts(loggedInUserId));
+                case 3 -> viewPosts(followClient.getPostsFromFollowedUsers(loggedInUserId));
+                case 4 -> viewPosts(postClient.getAllPosts());
+                case 5 -> { return; }
                 default -> System.out.println("❌ Invalid option. Try again.");
             }
         }
@@ -195,12 +196,23 @@ public class ClientMenu {
         scanner.nextLine();
         System.out.print("📝 Enter your post content: ");
         String content = scanner.nextLine();
+
+        // 🛠️ Validate if the loggedInUser is not null
+        if (loggedInUser == null) {
+            System.out.println("❌ Error: No logged-in user found.");
+            return;
+        }
+
         PostDTO post = new PostDTO(null, content, loggedInUser, null);
+        System.out.println("🛠️ Creating post with user ID: " + loggedInUserId); // Debug line
+        System.out.println("🛠️ Post Content: " + content); // Debug line
+
         PostDTO createdPost = postClient.createPost(post, loggedInUserId);
 
         if (createdPost != null) System.out.println("✅ Post created successfully!");
         else System.out.println("❌ Failed to create post.");
     }
+
 
     public static void viewPosts(List<PostDTO> posts) {
         if (posts.isEmpty()) {
@@ -216,18 +228,14 @@ public class ClientMenu {
 
             System.out.println("\n1️⃣ See Comments");
             System.out.println("2️⃣ Add a Comment");
-            System.out.println("3️⃣ Next Post");
-            System.out.println("4️⃣ Previous Post");
-            System.out.println("5️⃣ Back to Post Menu");
+            System.out.println("3️⃣ Back to Post Menu");
             System.out.print("Select an option: ");
 
             int choice = getUserChoice();
             switch (choice) {
                 case 1 -> viewComments(post);
                 case 2 -> addComment(post);
-                case 3 -> index = (index < posts.size() - 1) ? index + 1 : index;
-                case 4 -> index = (index > 0) ? index - 1 : index;
-                case 5 -> { return; }
+                case 3 -> { return; }
                 default -> System.out.println("❌ Invalid option. Try again.");
             }
         }

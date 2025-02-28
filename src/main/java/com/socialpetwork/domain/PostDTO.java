@@ -40,7 +40,7 @@ public class PostDTO {
         return user;
     }
 
-    public void setUserId(UserDTO user) {
+    public void setUser(UserDTO user) {
         this.user = user;
     }
 
