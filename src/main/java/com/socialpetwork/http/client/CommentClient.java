@@ -63,5 +63,6 @@ public class CommentClient {
         HttpResponse httpResponse = httpClient.delete(BASE_URL + "/" + id);
         return httpResponse.getStatusCode() == 204;
     }
+
 }
 

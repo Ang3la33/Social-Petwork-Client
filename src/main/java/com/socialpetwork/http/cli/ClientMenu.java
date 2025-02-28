@@ -21,7 +21,7 @@ public class ClientMenu {
 
     public static Long loggedInUserId = null;
     public static String loggedInUsername = null;
-    private static UserDTO loggedInUser = null;
+    public static UserDTO loggedInUser = null;
 
     public static void start() {
         System.out.println("🐾 Welcome to Social Petwork! 🐾");
@@ -83,7 +83,7 @@ public class ClientMenu {
 
 
     // 🔐 Login
-    private static void login() {
+    public static void login() {
         scanner.nextLine();
         System.out.print("👤 Enter username: ");
         String username = scanner.nextLine();
@@ -214,7 +214,7 @@ public class ClientMenu {
     }
 
     // Posts Menu
-    private static void postsMenu() {
+    public static void postsMenu() {
         while (true) {
             System.out.println("\n📝 Posts Menu");
             System.out.println("1️⃣ Create a Post");

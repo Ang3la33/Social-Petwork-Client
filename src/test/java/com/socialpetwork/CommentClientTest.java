@@ -1,6 +1,5 @@
 package com.socialpetwork;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.socialpetwork.domain.CommentDTO;
@@ -15,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,49 +32,60 @@ public class CommentClientTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
+    private UserDTO mockUser;
+    private PostDTO mockPost;
+    private CommentDTO mockComment;
+
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        mockUser = new UserDTO(1L, "John Doe", "1990-01-01", "john@example.com", "johndoe", "password");
+        mockPost = new PostDTO(1L, "Test Post Content", mockUser, null);
+        mockComment = new CommentDTO(1L, "Test Comment", mockUser, mockPost);
     }
 
     @Test
     public void testCreateComment_Success() throws Exception {
-        UserDTO user = new UserDTO(1L, "JohnDoe", "1990-01-01", "john@example.com", "johndoe", "password");
-        PostDTO post = new PostDTO(1L, 1L, "Test Post", LocalDateTime.now());
-        CommentDTO comment = new CommentDTO(1L, "Test Comment", user, post);
+        // Arrange
+        String commentJson = objectMapper.writeValueAsString(mockComment);
+        HttpResponse mockResponse = new HttpResponse(201, commentJson); // Status 201 for Created
 
-        String commentJson = objectMapper.writeValueAsString(comment);
-        HttpResponse mockResponse = new HttpResponse(201, commentJson); // Use 201 for creation success
+        when(mockHttpClient.post(eq("http://localhost:8080/comments"), anyString())).thenReturn(mockResponse);
 
-        when(mockHttpClient.post(eq("http://localhost:8080/comments"), eq(commentJson)))
-                .thenReturn(mockResponse);
+        // Act
+        CommentDTO result = commentClient.createComment(mockComment);
 
-        CommentDTO result = commentClient.createComment("Test Comment", user, post);
-
-        assertNotNull(result, "The result should not be null.");
-        assertEquals("Test Comment", result.getContent(), "The content should match the expected value.");
-        assertEquals(user.getId(), result.getUser().getId(), "User ID should match.");
-        assertEquals(post.getId(), result.getPost().getId(), "Post ID should match.");
+        // Assert
+        assertNotNull(result, "Comment creation should return a non-null object.");
+        assertEquals(mockComment.getId(), result.getId(), "The ID of the comment should match.");
+        assertEquals(mockComment.getContent(), result.getContent(), "The content of the comment should match.");
+        assertEquals(mockComment.getUser().getUsername(), result.getUser().getUsername(), "The username should match.");
     }
+
 
     @Test
     public void testGetCommentById_Success() throws Exception {
-        CommentDTO comment = new CommentDTO(1L, "Test Comment", null, null);
-        String commentJson = objectMapper.writeValueAsString(comment);
+        // Arrange
+        String commentJson = objectMapper.writeValueAsString(mockComment);
         HttpResponse mockResponse = new HttpResponse(200, commentJson);
 
-        when(mockHttpClient.get(anyString())).thenReturn(mockResponse);
+        when(mockHttpClient.get(eq("http://localhost:8080/comments/1"))).thenReturn(mockResponse);
 
+        // Act
         CommentDTO result = commentClient.getCommentById(1L);
 
-        assertNotNull(result, "The result should not be null.");
-        assertEquals(1L, result.getId(), "Comment ID should match.");
+        // Assert
+        assertNotNull(result, "Comment retrieval by ID should return a non-null object.");
+        assertEquals(1L, result.getId(), "The ID of the comment should match the expected value.");
+        assertEquals("Test Comment", result.getContent(), "The content of the comment should match.");
+        assertEquals(mockUser.getUsername(), result.getUser().getUsername(), "The username of the comment author should match.");
     }
+
 
     @Test
     public void testGetCommentsByPostId_Success() throws Exception {
-        CommentDTO comment = new CommentDTO(1L, "Test Comment", null, null);
-        List<CommentDTO> comments = Collections.singletonList(comment);
+        List<CommentDTO> comments = Collections.singletonList(mockComment);
         String commentsJson = objectMapper.writeValueAsString(comments);
         HttpResponse mockResponse = new HttpResponse(200, commentsJson);
 
@@ -84,23 +93,23 @@ public class CommentClientTest {
 
         List<CommentDTO> result = commentClient.getCommentsByPostId(1L);
 
-        assertNotNull(result, "The result list should not be null.");
+        assertNotNull(result, "Fetching comments by Post ID should return a non-null list.");
         assertFalse(result.isEmpty(), "The result list should not be empty.");
-        assertEquals("Test Comment", result.get(0).getContent(), "Comment content should match.");
+        assertEquals("Test Comment", result.get(0).getContent(), "The comment content should match.");
     }
 
     @Test
     public void testUpdateComment_Success() throws Exception {
-        CommentDTO comment = new CommentDTO(1L, "Updated Comment", null, null);
-        String commentJson = objectMapper.writeValueAsString(comment);
+        mockComment.setContent("Updated Comment");
+        String commentJson = objectMapper.writeValueAsString(mockComment);
         HttpResponse mockResponse = new HttpResponse(200, commentJson);
 
         when(mockHttpClient.put(anyString(), anyString())).thenReturn(mockResponse);
 
         CommentDTO result = commentClient.updateComment(1L, "Updated Comment");
 
-        assertNotNull(result, "The result should not be null.");
-        assertEquals("Updated Comment", result.getContent(), "The content should be updated.");
+        assertNotNull(result, "Updating a comment should return a non-null object.");
+        assertEquals("Updated Comment", result.getContent(), "The updated content should match.");
     }
 
     @Test
@@ -111,15 +120,7 @@ public class CommentClientTest {
 
         boolean result = commentClient.deleteComment(1L);
 
-        assertTrue(result, "The delete operation should return true.");
+        assertTrue(result, "The delete operation should return true on success.");
     }
 }
-
-
-
-
-
-
-
-
 
