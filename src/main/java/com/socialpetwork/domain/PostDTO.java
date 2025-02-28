@@ -20,6 +20,12 @@ public class PostDTO {
         this.createdAt = (createdAt == null) ? LocalDateTime.now() : createdAt;
     }
 
+    public PostDTO(long l, String testPost) {
+        this.createdAt = LocalDateTime.now();
+        this.id = l;
+        this.content = testPost;
+    }
+
     public Long getId() {
         return id;
     }
