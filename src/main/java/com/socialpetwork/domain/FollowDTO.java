@@ -2,12 +2,19 @@ package com.socialpetwork.domain;
 
 import java.time.LocalDateTime;
 
+import com.socialpetwork.domain.UserDTO;
+import com.socialpetwork.http.client.UserClient;
+
 public class FollowDTO {
 
     private Long id;               // Unique ID for the follow relationship
     private Long followerId;       // The user who is following
     private Long followedUserId;   // The user being followed
     private LocalDateTime followedAt; // Timestamp when the follow occurred
+
+    
+    // Initialize userClient
+    private static final UserClient userClient = new UserClient();
 
     // Default constructor
     public FollowDTO() {}
@@ -53,6 +60,17 @@ public class FollowDTO {
         this.followedAt = followedAt;
     }
 
+    public String getFollowerUsername() {
+        UserDTO user = userClient.getUserDetails(followerId);
+        return user != null ? user.getUsername() : "Unknown User";
+    }
+
+    public String getFollowedUsername() {
+        UserDTO user = userClient.getUserDetails(followedUserId);
+        return user != null ? user.getUsername() : "Unknown User";
+    }
+
+
     @Override
     public String toString() {
         return "FollowDTO [id=" + id +
@@ -60,4 +78,5 @@ public class FollowDTO {
                 ", followedUserId=" + followedUserId +
                 ", followedAt=" + followedAt + "]";
     }
+
 }

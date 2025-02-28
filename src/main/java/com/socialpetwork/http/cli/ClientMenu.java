@@ -147,18 +147,53 @@ public class ClientMenu {
             default -> System.out.println("❌ Invalid option. Try again.");
         }
     }
-
+    // Method to validate user ID input
+    private static Long getValidUserIdInput() {
+        try {
+            return Long.parseLong(scanner.nextLine().trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 
     private static void followUser() {
+        scanner.nextLine(); // Clear the input buffer
         System.out.print("👤 Enter user ID to follow: ");
-        Long userId = scanner.nextLong();
-        System.out.println(followClient.followUser(loggedInUserId, userId));
+        try {
+            Long userId = Long.parseLong(scanner.nextLine().trim());
+            if (userId != null && userId > 0) {
+                UserDTO user = userClient.getUserDetails(userId);
+                if (user != null) {
+                    String response = followClient.followUser(loggedInUserId, userId);
+                    if (response.contains("Successfully followed")) {
+                        System.out.println("✅ Successfully following " + user.getUsername() + ".");
+                    } else {
+                        System.out.println(response);
+                    }
+                } else {
+                    System.out.println("❌ User not found. Please try again.");
+                }
+            } else {
+                System.out.println("❌ Invalid user ID. Please try again.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Invalid input. Please enter a valid numeric user ID.");
+        }
     }
 
     private static void unfollowUser() {
+        scanner.nextLine();
         System.out.print("👤 Enter user ID to unfollow: ");
-        Long userId = scanner.nextLong();
-        System.out.println(followClient.unfollowUser(loggedInUserId, userId));
+        try {
+            Long userId = Long.parseLong(scanner.nextLine().trim());
+            if (userId != null && userId > 0) {
+                System.out.println(followClient.unfollowUser(loggedInUserId, userId));
+            } else {
+                System.out.println("❌ Invalid user ID. Please try again.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Invalid input. Please enter a valid numeric user ID.");
+        }
     }
 
     // My Profile
@@ -168,16 +203,12 @@ public class ClientMenu {
         System.out.println("📅 Birthday: " + loggedInUser.getBirthday());
         System.out.println("📧 Email: " + loggedInUser.getEmail());
 
-        System.out.println("\n1️⃣ View My Followers");
-        System.out.println("2️⃣ View Users I Follow");
-        System.out.println("3️⃣ Back to Dashboard");
+        System.out.println("\n1️⃣ Back to Dashboard");
         System.out.print("Select an option: ");
 
         int choice = getUserChoice();
         switch (choice) {
-            case 1 -> followClient.getFollowers(loggedInUserId);
-            case 2 -> followClient.getFollowing(loggedInUserId);
-            case 3 -> userDashboard();
+            case 1 -> userDashboard();
             default -> System.out.println("❌ Invalid option. Try again.");
         }
     }
@@ -187,19 +218,15 @@ public class ClientMenu {
         while (true) {
             System.out.println("\n📝 Posts Menu");
             System.out.println("1️⃣ Create a Post");
-            System.out.println("2️⃣ View My Posts");
-            System.out.println("3️⃣ View Posts from Users I Follow");
-            System.out.println("4️⃣ View All Posts");
-            System.out.println("5️⃣ Back to Dashboard");
+            System.out.println("2️⃣ View Posts");
+            System.out.println("3️⃣ Back to Dashboard");
             System.out.print("Select an option: ");
 
             int choice = getUserChoice();
             switch (choice) {
                 case 1 -> createPost();
-                case 2 -> viewPosts(postClient.getUserPosts(loggedInUserId));
-                case 3 -> viewPosts(followClient.getPostsFromFollowedUsers(loggedInUserId));
-                case 4 -> viewPosts(postClient.getAllPosts());
-                case 5 -> { return; }
+                case 2 -> viewPosts(postClient.getAllPosts());
+                case 3 -> { return; }
                 default -> System.out.println("❌ Invalid option. Try again.");
             }
         }
@@ -226,33 +253,79 @@ public class ClientMenu {
         else System.out.println("❌ Failed to create post.");
     }
 
-
     public static void viewPosts(List<PostDTO> posts) {
-        if (posts.isEmpty()) {
+        if (posts == null || posts.isEmpty()) {
             System.out.println("🚫 No posts available.");
             return;
         }
 
-        int index = 0;
-        while (index >= 0 && index < posts.size()) {
-            PostDTO post = posts.get(index);
-            System.out.println("\n📄 Post by: " + (post.getUser() != null ? post.getUser().getUsername() : "Unknown"));
+        System.out.println("\n📂 Viewing " + posts.size() + " posts:");
+        for (PostDTO post : posts) {
+            System.out.println("\n🆔 Post ID: " + post.getId());
+            System.out.println("📄 Post by: " + (post.getUser() != null ? post.getUser().getUsername() : "Unknown"));
             System.out.println("📝 " + post.getContent());
+            System.out.println("────────────────────────");
+        }
 
-            System.out.println("\n1️⃣ See Comments");
-            System.out.println("2️⃣ Add a Comment");
-            System.out.println("3️⃣ Back to Post Menu");
-            System.out.print("Select an option: ");
+        System.out.println("\nOptions:");
+        System.out.println("1️⃣ Select a Post by ID");
+        System.out.println("2️⃣ Back to Post Menu");
+        System.out.print("Select an option: ");
 
-            int choice = getUserChoice();
-            switch (choice) {
-                case 1 -> viewComments(post);
-                case 2 -> addComment(post);
-                case 3 -> { return; }
-                default -> System.out.println("❌ Invalid option. Try again.");
+        int choice = getUserChoice();
+        switch (choice) {
+            case 1 -> selectPostForComment(posts);
+            case 2 -> { return; }
+            default -> {
+                System.out.println("❌ Invalid option. Try again.");
+                viewPosts(posts); // Recursively call to handle invalid input
             }
         }
     }
+
+    // 🆔 Select a post by ID to view or comment
+    private static void selectPostForComment(List<PostDTO> posts) {
+        while (true) {
+            scanner.nextLine(); // Clear the buffer to avoid skipping input
+            System.out.print("🆔 Enter Post ID: ");
+            String input = scanner.nextLine().trim();
+
+            try {
+                Long postId = Long.parseLong(input);
+
+                // Validate Post ID exists in the posts list
+                PostDTO selectedPost = posts.stream()
+                        .filter(post -> post.getId().equals(postId))
+                        .findFirst()
+                        .orElse(null);
+
+                if (selectedPost != null) {
+                    System.out.println("\n📄 Post by: " + (selectedPost.getUser() != null ? selectedPost.getUser().getUsername() : "Unknown"));
+                    System.out.println("📝 " + selectedPost.getContent());
+
+                    System.out.println("\n1️⃣ View Comments");
+                    System.out.println("2️⃣ Add a Comment");
+                    System.out.println("3️⃣ Back to Post Menu");
+                    System.out.print("Select an option: ");
+
+                    int choice = getUserChoice();
+                    switch (choice) {
+                        case 1 -> viewComments(selectedPost);
+                        case 2 -> addComment(selectedPost);
+                        case 3 -> { return; }
+                        default -> System.out.println("❌ Invalid option. Try again.");
+                    }
+                    break;
+                } else {
+                    System.out.println("❌ Invalid Post ID. Please enter a valid ID from the list above.");
+                }
+
+            } catch (NumberFormatException e) {
+                System.out.println("❌ Invalid Post ID. Please enter a numeric value.");
+            }
+        }
+    }
+
 
     public static void viewComments(PostDTO post) {
         try {
