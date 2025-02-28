@@ -4,28 +4,20 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class PostDTO {
-
     private Long id;
-    private Long userId;
+    private UserDTO user;
     private String content;
     private LocalDateTime createdAt;
 
-    // Default constructor
     public PostDTO() {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Constructor for getAllPosts and createPost
-    public PostDTO(Long id, Long userId, String content, LocalDateTime createdAt) {
+     public PostDTO(Long id, String content, UserDTO user, LocalDateTime createdAt) {
         this.id = id;
-        this.userId = userId;
+        this.user = user;
         this.content = content;
-        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
-    }
-
-    // Simplified constructor for creating a new post without an ID
-    public PostDTO(Long userId, String content) {
-        this(null, userId, content, null);
+        this.createdAt = (createdAt == null) ? LocalDateTime.now() : createdAt;
     }
 
     public Long getId() {
@@ -36,12 +28,12 @@ public class PostDTO {
         this.id = id;
     }
 
-    public Long getUserId() {
-        return userId;
+    public UserDTO getUser() {
+        return user;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setUser(UserDTO user) {
+        this.user = user;
     }
 
     public String getContent() {
@@ -62,7 +54,7 @@ public class PostDTO {
 
     @Override
     public String toString() {
-        return "PostDTO [id=" + id + ", userId=" + userId + ", content=" + content + ", createdAt=" + createdAt + "]";
+        return "PostDTO [id=" + id + ", user=" + user + ", content=" + content + ", createdAt=" + createdAt + "]";
     }
 
     @Override
@@ -71,14 +63,14 @@ public class PostDTO {
         if (!(o instanceof PostDTO)) return false;
         PostDTO postDTO = (PostDTO) o;
         return Objects.equals(id, postDTO.id) &&
-                Objects.equals(userId, postDTO.userId) &&
+                Objects.equals(user, postDTO.user) &&
                 Objects.equals(content, postDTO.content) &&
                 Objects.equals(createdAt, postDTO.createdAt);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, userId, content, createdAt);
+        return Objects.hash(id, user, content, createdAt);
     }
 }
 
