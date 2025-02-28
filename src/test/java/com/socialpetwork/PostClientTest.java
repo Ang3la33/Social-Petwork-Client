@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.socialpetwork.domain.PostDTO;
+import com.socialpetwork.domain.UserDTO;
 import com.socialpetwork.http.client.PostClient;
 import com.socialpetwork.util.HttpClient;
 import com.socialpetwork.util.HttpResponse;
@@ -42,9 +43,11 @@ public class PostClientTest {
 
     @Test
     public void testGetAllPosts_success() throws Exception {
+        LocalDateTime now = LocalDateTime.now();
+        UserDTO exampleUser = new UserDTO(101L, "Example", "1990-01-01", "example@example.com", "example", "password");
         List<PostDTO> expectedPosts = Arrays.asList(
-                new PostDTO(1L, 101L, "Post 1", LocalDateTime.now()),
-                new PostDTO(2L, 101L, "Post 2", LocalDateTime.now())
+                new PostDTO(1L, "Post 1", exampleUser, now),
+                new PostDTO(2L, "Post 2", exampleUser, now)
         );
 
         String jsonPayload = objectMapper.writeValueAsString(expectedPosts);
@@ -72,12 +75,12 @@ public class PostClientTest {
 
     @Test
     public void testCreatePost_success() throws Exception {
-        PostDTO newPost = new PostDTO(null, "New post");
-        PostDTO createdPost = new PostDTO(3L, "New post");
+        UserDTO exampleUser = new UserDTO(1L, "Example", "1990-01-01", "example@example.com", "example", "password");
+        PostDTO newPost = new PostDTO(null, "New post", null, null);
+        PostDTO createdPost = new PostDTO(3L, "New post", exampleUser, LocalDateTime.now());
         String jsonPayload = objectMapper.writeValueAsString(createdPost);
-        HttpResponse mockResponse = new HttpResponse(201, jsonPayload);
-
         String url = "http://localhost:8080/posts?user_id=1";
+        HttpResponse mockResponse = new HttpResponse(201, jsonPayload);
         when(httpClient.post(eq(url), any(String.class))).thenReturn(mockResponse);
 
         PostDTO result = postClient.createPost(newPost, 1L);
@@ -89,7 +92,7 @@ public class PostClientTest {
 
     @Test
     public void testCreatePost_invalidResponse() throws Exception {
-        PostDTO newPost = new PostDTO(null, "Invalid post");
+        PostDTO newPost = new PostDTO(null, "Invalid post", null, null);
         HttpResponse mockResponse = new HttpResponse(400, "Invalid Request");
 
         String url = "http://localhost:8080/posts?user_id=1";
@@ -101,6 +104,7 @@ public class PostClientTest {
         verify(httpClient).post(eq(url), any(String.class));
     }
 }
+
 
 
 
