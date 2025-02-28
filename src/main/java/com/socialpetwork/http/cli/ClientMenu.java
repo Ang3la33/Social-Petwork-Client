@@ -124,7 +124,19 @@ public class ClientMenu {
     // Browsing Users
     public static void browseUsers() {
         System.out.println("\n👥 " + loggedInUsername + " is Browsing Users");
-        userClient.fetchUsers();
+
+        List<UserDTO> users = userClient.fetchUsers(); // Fetch and store users
+
+        if (users == null || users.isEmpty()) {
+            System.out.println("🚫 No users found.");
+            return;
+        }
+
+        System.out.println("📋 Available Users:");
+        for (UserDTO user : users) {
+            System.out.println("👤 ID: " + user.getId() + " | Username: " + user.getUsername() + " | Name: " + user.getName());
+        }
+
         System.out.print("\n1️⃣ Follow a User\n2️⃣ Unfollow a User\n3️⃣ Back to Dashboard\nSelect an option: ");
 
         int choice = getUserChoice();
@@ -135,6 +147,7 @@ public class ClientMenu {
             default -> System.out.println("❌ Invalid option. Try again.");
         }
     }
+
 
     private static void followUser() {
         System.out.print("👤 Enter user ID to follow: ");
