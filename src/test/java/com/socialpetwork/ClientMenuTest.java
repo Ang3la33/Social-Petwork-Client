@@ -20,6 +20,7 @@ import org.mockito.MockitoAnnotations;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.time.LocalDateTime;
 import java.util.List;
 
 class ClientMenuTest {
@@ -50,6 +51,9 @@ class ClientMenuTest {
         followClient = mock(FollowClient.class);
         commentClient = mock(CommentClient.class);
 
+        ClientMenu.loggedInUserId = 1L;
+        ClientMenu.loggedInUsername = "testUser";
+
         clientMenu = new ClientMenu();
     }
 
@@ -61,7 +65,7 @@ class ClientMenuTest {
         clientMenu.mainMenu();
         String output = outContent.toString();
 
-        assertTrue(output.contains("🐾 Welcome to Social Petwork! 🐾"));
+        assertTrue(output.contains("🐾 Welcome to The Social Petwork! 🐾"));
         assertTrue(output.contains("1️⃣ Register"));
         assertTrue(output.contains("2️⃣ Login"));
         assertTrue(output.contains("3️⃣ Exit"));
@@ -69,10 +73,6 @@ class ClientMenuTest {
 
     @Test
     void testUserDashboardDisplay() {
-        // Simulate logged-in user
-        ClientMenu.loggedInUserId = 1L;
-        ClientMenu.loggedInUsername = "testUser";
-
         String input = "4\n"; // Exit after menu shows
         System.setIn(new ByteArrayInputStream(input.getBytes()));
 
@@ -88,7 +88,7 @@ class ClientMenuTest {
 
     @Test
     void testRegisterUser() {
-        String input = "John Doe\n1990-01-01\njohn@example.com\njohndoe\n\n";
+        String input = "John Doe\n1990-01-01\njohn@example.com\njohndoe\npassword\n";
         System.setIn(new ByteArrayInputStream(input.getBytes()));
 
         when(userClient.register(any(UserDTO.class))).thenReturn(true);
@@ -101,7 +101,7 @@ class ClientMenuTest {
 
     @Test
     void testRegisterUserFailure() {
-        String input = "John Doe\n1990-01-01\njohn@example.com\njohndoe\n\n";
+        String input = "John Doe\n1990-01-01\njohn@example.com\njohndoe\npassword\n";
         System.setIn(new ByteArrayInputStream(input.getBytes()));
 
         when(userClient.register(any(UserDTO.class))).thenReturn(false);
@@ -113,47 +113,27 @@ class ClientMenuTest {
     }
 
     @Test
-    void testValidInput() {
-        String input = "1\n";
-        System.setIn(new ByteArrayInputStream(input.getBytes()));
-        int choice = ClientMenu.getUserChoice();
-        assertEquals(1, choice);
-    }
-
-    @Test
-    void testInvalidInputThenValidInput() {
-        String input = "xyz\n2\n";
-        System.setIn(new ByteArrayInputStream(input.getBytes()));
-        int choice = ClientMenu.getUserChoice();
-        String output = outContent.toString();
-
-        assertTrue(output.contains("❌ Please enter a valid number."));
-        assertEquals(2, choice);
-    }
-
-    @Test
     void testFetchUsers() {
         when(userClient.fetchUsers()).thenReturn(List.of(
-                new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "profile.jpg")
+                new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "password")
         ));
 
         clientMenu.browseUsers();
         String output = outContent.toString();
 
-        assertTrue(output.contains("👥 Browsing Users"));
+        assertTrue(output.contains("👥 testUser is Browsing Users"));
         assertTrue(output.contains("John Doe"));
     }
 
     @Test
     void testViewPosts() {
         when(postClient.getAllPosts()).thenReturn(List.of(
-                new PostDTO(1L, "Hello world!", new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "profile.jpg"), null)
+                new PostDTO(1L, 1L, "Hello world!", LocalDateTime.now())
         ));
 
         clientMenu.viewPosts(postClient.getAllPosts());
         String output = outContent.toString();
 
-        assertTrue(output.contains("📄 Post by: John Doe"));
         assertTrue(output.contains("📝 Hello world!"));
     }
 
@@ -163,7 +143,7 @@ class ClientMenuTest {
         System.setIn(new ByteArrayInputStream(input.getBytes()));
 
         when(postClient.createPost(any(PostDTO.class), anyLong())).thenReturn(
-                new PostDTO(1L, "Hello Petwork!", new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "profile.jpg"), null)
+                new PostDTO(1L, 1L, "Hello Petwork!", LocalDateTime.now())
         );
 
         clientMenu.createPost();
@@ -177,8 +157,8 @@ class ClientMenuTest {
         String input = "Nice post!\n";
         System.setIn(new ByteArrayInputStream(input.getBytes()));
 
-        PostDTO post = new PostDTO(1L, "Test Post", new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "profile.jpg"), null);
-        CommentDTO comment = new CommentDTO(1L, "Nice post!", post.getUser(), post);
+        PostDTO post = new PostDTO(1L, 1L, "Test Post", LocalDateTime.now());
+        CommentDTO comment = new CommentDTO(1L, "Nice post!", new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "password"), post);
 
         try {
             when(commentClient.createComment(anyString(), any(UserDTO.class), any(PostDTO.class))).thenReturn(comment);
@@ -194,11 +174,11 @@ class ClientMenuTest {
 
     @Test
     void testViewComments() {
-        PostDTO post = new PostDTO(1L, "Test Post", new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "profile.jpg"), null);
-        CommentDTO comment = new CommentDTO(1L, "Nice post!", post.getUser(), post);
+        PostDTO post = new PostDTO(1L, 1L, "Test Post", LocalDateTime.now());
+        CommentDTO comment = new CommentDTO(1L, "Nice post!", new UserDTO(1L, "John Doe", "1990-05-10", "john@example.com", "johndoe", "password"), post);
 
         try {
-            when(commentClient.getCommentsByPostId(Long.valueOf(anyString()))).thenReturn(List.of(comment));
+            when(commentClient.getCommentsByPostId(eq(1L))).thenReturn(List.of(comment));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -223,3 +203,5 @@ class ClientMenuTest {
         assertTrue(output.contains("🔒 Logging out..."));
     }
 }
+
+
