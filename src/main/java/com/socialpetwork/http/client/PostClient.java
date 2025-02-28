@@ -35,25 +35,36 @@ public class PostClient {
 
     // 🔹 Fetch all posts
     public List<PostDTO> getAllPosts() {
-        String url = BASE_URL;
+        String url = "http://localhost:8080/posts";
         try {
             HttpResponse response = httpClient.get(url);
 
             if (response.getStatusCode() == 200) {
-                return objectMapper.readValue(response.getBody(), new TypeReference<List<PostDTO>>() {});
+                List<PostDTO> posts = objectMapper.readValue(response.getBody(), new TypeReference<List<PostDTO>>() {});
+
+                if (posts != null && !posts.isEmpty()) {
+                    System.out.println("🛠️ Debug: Fetched " + posts.size() + " posts.");
+                    return posts;
+                } else {
+                    System.out.println("🚫 No posts available.");
+                    return List.of();
+                }
             } else {
-                System.out.println("❌ Error - Status Code: " + response.getStatusCode());
+                System.out.println("❌ Error fetching posts - Status Code: " + response.getStatusCode());
+                System.out.println("❌ Server Response: " + response.getBody());
                 return List.of();
             }
         } catch (IOException e) {
-            System.out.println("❌ Error: " + e.getMessage());
+            System.out.println("❌ Error fetching posts: " + e.getMessage());
             return List.of();
         }
     }
 
+
+
     // 🔹 Fetch only posts created by the logged-in user
     public List<PostDTO> getUserPosts(Long userId) {
-        String url = BASE_URL + "/user/" + userId; // Endpoint: /posts/user/{userId}
+        String url = BASE_URL + "/user/" + userId; // Corrected endpoint
         try {
             HttpResponse response = httpClient.get(url);
 
@@ -69,22 +80,24 @@ public class PostClient {
         }
     }
 
-    // 🔹 Fetch a single post by ID
-    public PostDTO getPostById(Long id) {
-        String url = BASE_URL + "/" + id;
-        try {
-            HttpResponse response = httpClient.get(url);
-            if (response.getStatusCode() == 200) {
-                return objectMapper.readValue(response.getBody(), PostDTO.class);
-            } else {
-                System.out.println("❌ Post Not Found. Status Code: " + response.getStatusCode());
-                return null;
-            }
-        } catch (IOException e) {
-            System.out.println("❌ Error: " + e.getMessage());
-            return null;
-        }
-    }
+
+
+//    // 🔹 Fetch a single post by ID
+//    public PostDTO getPostById(Long id) {
+//        String url = BASE_URL + "/" + id;
+//        try {
+//            HttpResponse response = httpClient.get(url);
+//            if (response.getStatusCode() == 200) {
+//                return objectMapper.readValue(response.getBody(), PostDTO.class);
+//            } else {
+//                System.out.println("❌ Post Not Found. Status Code: " + response.getStatusCode());
+//                return null;
+//            }
+//        } catch (IOException e) {
+//            System.out.println("❌ Error: " + e.getMessage());
+//            return null;
+//        }
+//    }
 
     public PostDTO createPost(PostDTO postDTO, Long userId) {
         String url = BASE_URL + "?userId=" + userId;
