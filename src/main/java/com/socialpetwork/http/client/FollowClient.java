@@ -1,10 +1,15 @@
 package com.socialpetwork.http.client;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.socialpetwork.domain.FollowDTO;
+import com.socialpetwork.domain.PostDTO;
+import com.socialpetwork.util.HttpResponse;
+import com.socialpetwork.util.HttpClient;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -142,4 +147,24 @@ public class FollowClient {
             if (conn != null) conn.disconnect();
         }
     }
+
+    // Fetch posts from users followed by the logged-in user
+    public List<PostDTO> getPostsFromFollowedUsers(Long userId) {
+        HttpClient httpClient = new HttpClient();
+        String url = "http://localhost:8080/follows/posts/" + userId;
+        try {
+            HttpResponse response = httpClient.get(url);
+            if (response.getStatusCode() == 200) {
+                return objectMapper.readValue(response.getBody(), new TypeReference<List<PostDTO>>() {});
+            } else {
+                System.out.println("❌ Error fetching followed users' posts - Status Code: " + response.getStatusCode());
+                return List.of();
+            }
+        } catch (IOException e) {
+            System.out.println("❌ Error: " + e.getMessage());
+            return List.of();
+        }
+    }
+
+
 }

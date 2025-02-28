@@ -13,7 +13,7 @@ public class PostDTO {
         this.createdAt = LocalDateTime.now();
     }
 
-    public PostDTO(Long id, String content, UserDTO user, LocalDateTime createdAt) {
+     public PostDTO(Long id, String content, UserDTO user, LocalDateTime createdAt) {
         this.id = id;
         this.user = user;
         this.content = content;
