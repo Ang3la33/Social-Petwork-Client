@@ -9,11 +9,11 @@ public class PostDTO {
     private UserDTO user;
     private LocalDateTime createdAt;
 
-    public PostDTO() {
+    public PostDTO(Object o, String newPost) {
         this.createdAt = LocalDateTime.now();
     }
 
-    public PostDTO(Long id, String content, UserDTO user, LocalDateTime createdAt) {
+    public PostDTO(Long id, long content, String user, LocalDateTime createdAt) {
         this.id = id;
         this.content = content;
         this.user = user;
